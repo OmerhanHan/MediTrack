@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#191c1e",
+              "surface-container": "#eceef0",
+              "on-background": "#191c1e",
+              "primary": "#00458d",
+              "secondary-container": "#d3e1f5",
+              "primary-container": "#005cb9",
+              "inverse-on-surface": "#eff1f3",
+              "surface-container-low": "#f2f4f6",
+              "tertiary-container": "#9f4100",
+              "surface-container-high": "#e6e8ea",
+              "surface": "#f7f9fb",
+              "surface-container-lowest": "#ffffff",
+              "inverse-surface": "#2d3133",
+              "surface-tint": "#015cb9",
+              "on-tertiary-fixed-variant": "#7a3000",
+              "on-primary-container": "#c6d8ff",
+              "inverse-primary": "#aac7ff",
+              "on-primary-fixed": "#001b3e",
+              "surface-variant": "#e0e3e5",
+              "on-secondary-fixed-variant": "#3b4858",
+              "surface-container-highest": "#e0e3e5",
+              "tertiary-fixed": "#ffdbcb",
+              "secondary-fixed-dim": "#bac8db",
+              "on-secondary-container": "#576475",
+              "outline": "#727784",
+              "tertiary": "#793000",
+              "primary-fixed-dim": "#aac7ff",
+              "tertiary-fixed-dim": "#ffb693",
+              "on-error": "#ffffff",
+              "background": "#f7f9fb",
+              "on-tertiary-fixed": "#341000",
+              "outline-variant": "#c2c6d4",
+              "secondary": "#525f70",
+              "primary-fixed": "#d7e3ff",
+              "on-secondary-fixed": "#0f1c2b",
+              "surface-dim": "#d8dadc",
+              "on-primary-fixed-variant": "#00458e",
+              "surface-bright": "#f7f9fb",
+              "error": "#ba1a1a",
+              "secondary-fixed": "#d6e4f8",
+              "on-secondary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-surface-variant": "#424752",
+              "on-tertiary-container": "#ffcdb7",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-3 w-full bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none no-line tonal-shift bg-slate-100/50 dark:bg-slate-800/50">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="MediTrack Logo" class="w-full h-full object-cover" data-alt="Official MediTrack logo for medical tracking and clinical management" src="https://lh3.googleusercontent.com/aida/ADBb0uiEPB4k0-LqVZL_KhckfZEWArnhXlnf3e4c0-Czjxq2ypNAtCPPrfFR5VU0mcR7G_wK7gserVMMIUHmSwadw7Eczg-f3TifTJpQKYjneC9J7iH0mxR1m4NHkgvvW1cQv1ReWWghYOtwZFBMiHaHGo-1-AvhATWs0iPtBgqypqTf4NnQgX48t0PhgBONnB-LL86QOuW4bg9gWm-D-oZUq9noETQ3giwiNIZrTFNqIYSmFowPYqsXiSuPn5fNotezyBMndZ9HrzDg"/>
+</div>
+<h1 class="text-xl font-bold bg-gradient-to-br from-blue-800 to-blue-600 bg-clip-text text-transparent font-inter tracking-tight">MediTrack</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-6xl mx-auto min-h-screen">
+<!-- Profile Header Section -->
+<div class="mb-12">
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2">Profil Ayarları</h2>
+<p class="text-on-surface-variant text-lg">Klinik kimliğinizi ve erişim tercihlerinizi buradan yönetin.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Sidebar: Profile Photo & Fast Actions -->
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
+<div class="relative group mb-6">
+<div class="w-32 h-32 rounded-full overflow-hidden border-4 border-surface-container shadow-inner">
+<img alt="User Profile Big" class="w-full h-full object-cover" data-alt="close up headshot of a female doctor looking professional and friendly against a blurred medical facility background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8JYav_cCWFfzUr76QSgoOYIq2-__b6E-Hs2GaPnSDde1juhGi3ZnuHYUfvRnlxBj-cVnbNuN3o7F0cKu6jQdrlkJEVBzvp-CD84Oa4nxIrc3oR_8Rd6WJDQz4-97eYKVx8JgM4sUatjPHaGAzeEeHadgh1igjMyUa82zcFr4zAFDboCd5hNLHUMgv1rYxj0PyLWhwu9a7nKBIKm56I5yaohEMFSByqcTpLPpzXk1FWSRtQDpnt1sC0vK1fIYm5ylPgM9pil0e4PA"/>
+</div>
+<button class="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform duration-200">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</div>
+<h3 class="text-xl font-bold text-on-surface">S.Y.</h3>
+<p class="text-on-surface-variant font-medium mb-6">Kardiyoloji Uzmanı</p>
+<div class="w-full pt-6 border-t border-surface-container space-y-3 text-left">
+<div class="flex items-center gap-3 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary scale-90">mail</span>
+                            selin.yilmaz@hospital.com
+                        </div>
+<div class="flex items-center gap-3 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary scale-90">badge</span>
+                            Sicil: #88291
+                        </div>
+</div>
+</div>
+</div>
+<!-- Main Content: Form Structure -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Personal Info Form -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+<div class="flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-primary">person</span>
+<h3 class="text-lg font-bold">Kişisel Bilgiler</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Ad</label>
+<input class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none" type="text" value="Selin"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Soyad</label>
+<input class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none" type="text" value="Yılmaz"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Unvan</label>
+<input class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none" type="text" value="Uzman Doktor"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Bölüm / Departman</label>
+<select class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none appearance-none">
+<option>Kardiyoloji</option>
+<option>Nöroloji</option>
+<option>Pediatri</option>
+<option>Genel Cerrahi</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Password Change Section (Inline) -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-primary">
+<div class="flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-primary">lock_reset</span>
+<h3 class="text-lg font-bold">Güvenlik ve Şifre</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Mevcut Şifre</label>
+<input class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none" placeholder="••••••••" type="password"/>
+</div>
+<div class="space-y-2 hidden md:block"></div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Yeni Şifre</label>
+<input class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none" placeholder="••••••••" type="password"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant ml-1">Yeni Şifre (Tekrar)</label>
+<input class="w-full bg-surface-container-low border-0 rounded-lg p-3 text-on-surface focus:ring-2 focus:ring-primary ring-1 ring-outline-variant/20 transition-all outline-none" placeholder="••••••••" type="password"/>
+</div>
+</div>
+</section>
+<!-- Form Actions -->
+<div class="flex flex-col sm:flex-row items-center justify-end gap-4 mt-12">
+<button class="w-full sm:w-auto px-8 py-3 rounded-lg text-on-secondary-container font-semibold transition-all hover:bg-slate-200">İptal Et</button>
+<button class="w-full sm:w-auto px-12 py-3 bg-gradient-to-r from-primary to-primary-container text-white rounded-lg font-bold shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-95 duration-200">Değişiklikleri Kaydet</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+</body></html>

@@ -1,0 +1,60 @@
+export const Colors = {
+  primary: '#00458d',
+  primaryContainer: '#005cb9',
+  onPrimary: '#ffffff',
+  onPrimaryContainer: '#c6d8ff',
+  primaryFixed: '#d7e3ff',
+  primaryFixedDim: '#aac7ff',
+
+  secondary: '#525f70',
+  secondaryContainer: '#d3e1f5',
+  onSecondary: '#ffffff',
+  onSecondaryContainer: '#576475',
+  secondaryFixed: '#d6e4f8',
+
+  tertiary: '#793000',
+  tertiaryContainer: '#9f4100',
+  onTertiary: '#ffffff',
+  tertiaryFixed: '#ffdbcb',
+  tertiaryFixedDim: '#ffb693',
+  onTertiaryFixed: '#341000',
+  onTertiaryFixedVariant: '#7a3000',
+
+  error: '#ba1a1a',
+  errorContainer: '#ffdad6',
+  onError: '#ffffff',
+  onErrorContainer: '#93000a',
+
+  surface: '#f7f9fb',
+  surfaceBright: '#f7f9fb',
+  surfaceDim: '#d8dadc',
+  surfaceContainer: '#eceef0',
+  surfaceContainerLow: '#f2f4f6',
+  surfaceContainerHigh: '#e6e8ea',
+  surfaceContainerHighest: '#e0e3e5',
+  surfaceContainerLowest: '#ffffff',
+  surfaceVariant: '#e0e3e5',
+  surfaceTint: '#015cb9',
+
+  onSurface: '#191c1e',
+  onSurfaceVariant: '#424752',
+  onBackground: '#191c1e',
+  background: '#f7f9fb',
+
+  outline: '#727784',
+  outlineVariant: '#c2c6d4',
+
+  inverseSurface: '#2d3133',
+  inverseOnSurface: '#eff1f3',
+  inversePrimary: '#aac7ff',
+
+  // Semantic colors
+  emerald: '#10b981',
+  amber: '#f59e0b',
+  blue50: '#eff6ff',
+  blue600: '#2563eb',
+  blue700: '#1d4ed8',
+  blue800: '#1e40af',
+  slate400: '#94a3b8',
+  slate500: '#64748b',
+};
