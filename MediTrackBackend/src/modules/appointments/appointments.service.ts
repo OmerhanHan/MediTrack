@@ -1,6 +1,8 @@
 import { prisma } from '../../plugins/prisma.js';
 import { encrypt, decrypt, encryptIfPresent, decryptIfPresent } from '../../common/encryption.js';
 import type { CreateAppointmentInput } from './appointments.schemas.js';
+import { sendSms } from '../../services/sms.js';
+import { smsTemplates } from '../../services/smsTemplates.js';
 
 export type AppointmentResponse = {
   id: string;
@@ -91,5 +93,52 @@ export async function createAppointment(
     },
   });
 
+  // Get doctor details to include in SMS
+  const doctor = await prisma.user.findUnique({ where: { id: doctorId } });
+  if (doctor) {
+    const docName = `${doctor.firstName} ${doctor.lastName}`;
+    const smsMsg = smsTemplates.appointmentCreated(docName, payload.date, payload.time);
+    // Asynchronously send SMS (don't wait for completion)
+    sendSms(payload.phone, smsMsg).catch(console.error);
+  }
+
   return decryptAppointment(row);
+}
+
+export async function updateAppointment(
+  doctorId: string,
+  appointmentId: string,
+  payload: { date?: string; time?: string; notes?: string; status?: string }
+): Promise<AppointmentResponse> {
+  const existing = await prisma.appointment.findFirst({
+    where: { id: appointmentId, doctorId }
+  });
+  if (!existing) throw new Error('APPOINTMENT_NOT_FOUND');
+
+  const data: any = {};
+  if (payload.date) data.date = payload.date;
+  if (payload.time) data.time = payload.time;
+  if (payload.notes !== undefined) {
+    data.encryptedNotes = encryptIfPresent(payload.notes);
+    if (payload.notes) data.type = payload.notes.split(' ')[0];
+  }
+  if (payload.status) data.status = payload.status;
+
+  const row = await prisma.appointment.update({
+    where: { id: appointmentId },
+    data
+  });
+
+  return decryptAppointment(row);
+}
+
+export async function deleteAppointment(doctorId: string, appointmentId: string): Promise<void> {
+  const existing = await prisma.appointment.findFirst({
+    where: { id: appointmentId, doctorId }
+  });
+  if (!existing) throw new Error('APPOINTMENT_NOT_FOUND');
+
+  await prisma.appointment.delete({
+    where: { id: appointmentId }
+  });
 }

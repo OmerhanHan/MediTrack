@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { loginSchema, refreshSchema } from './auth.schemas.js';
-import { login, rotateRefreshToken, getUserProfile } from './auth.service.js';
+import { loginSchema, refreshSchema, registerSchema } from './auth.schemas.js';
+import { login, rotateRefreshToken, getUserProfile, register } from './auth.service.js';
 
 export async function authRoutes(app: FastifyInstance) {
   app.post('/auth/login', async (request, reply) => {
@@ -21,6 +21,27 @@ export async function authRoutes(app: FastifyInstance) {
       ...tokenSet,
       user: profile || tokenSet.user,
     });
+  });
+
+  app.post('/auth/register', async (request, reply) => {
+    const parsed = registerSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ message: 'Invalid request body', errors: parsed.error.flatten() });
+    }
+
+    try {
+      const tokenSet = await register(app, parsed.data);
+      const profile = await getUserProfile(tokenSet.user.userId);
+      return reply.code(201).send({
+        ...tokenSet,
+        user: profile || tokenSet.user,
+      });
+    } catch (e: any) {
+      if (e.message === 'EMAIL_EXISTS') {
+        return reply.code(409).send({ message: 'This email is already registered.' });
+      }
+      throw e;
+    }
   });
 
   app.post('/auth/refresh', async (request, reply) => {
