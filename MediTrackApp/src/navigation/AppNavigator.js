@@ -5,10 +5,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
+import { useAuthStore } from '../store/useAuthStore';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
 import DoctorRegisterScreen from '../screens/DoctorRegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import AppointmentEntryScreen from '../screens/AppointmentEntryScreen';
@@ -105,16 +107,22 @@ function AuthStackScreen() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="DoctorRegister" component={DoctorRegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </AuthStack.Navigator>
   );
 }
 
 export default function AppNavigator() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Auth" component={AuthStackScreen} />
-        <RootStack.Screen name="Main" component={MainTabScreen} />
+        {isAuthenticated ? (
+          <RootStack.Screen name="Main" component={MainTabScreen} />
+        ) : (
+          <RootStack.Screen name="Auth" component={AuthStackScreen} />
+        )}
       </RootStack.Navigator>
     </NavigationContainer>
   );

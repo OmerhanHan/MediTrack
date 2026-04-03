@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../theme/colors';
 import AppHeader from '../components/AppHeader';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { useAppointmentStore } from '../store/useAppointmentStore';
 
 const MONTHS = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -13,22 +15,7 @@ const MONTHS = [
 ];
 const DAYS_HEADER = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'];
 
-// Day data with load indicators: 'low' (green), 'med' (amber), 'high' (red), null (none)
-const DAY_DATA = {
-  1: 'low', 2: 'med', 3: 'high', 4: 'low', 6: 'low', 7: 'med',
-  8: 'low', 9: 'high', 10: 'med', 11: 'low', 13: 'low', 14: 'low',
-  15: 'high', 16: 'med', 17: 'low', 18: 'low', 20: 'low',
-};
 
-const APPOINTMENTS_BY_DAY = {
-  10: [
-    { id: '1', time: '09:30', period: 'AM', name: 'Elena Rodriguez', desc: 'Follow-up: Hypertension' },
-    { id: '2', time: '11:15', period: 'AM', name: 'Marcus Chen', desc: 'New Patient Consultation' },
-    { id: '3', time: '02:45', period: 'PM', name: 'Sarah Jenkins', desc: 'Lab Results Review' },
-    
-    
-  ],
-};
 
 function getDaysInMonth(month, year) {
   return new Date(year, month + 1, 0).getDate();
@@ -46,10 +33,18 @@ const LOAD_COLORS = {
 };
 
 export default function CalendarScreen({ navigation, route }) {
-  const [currentMonth, setCurrentMonth] = useState(9); // October (0-indexed)
-  const [currentYear, setCurrentYear] = useState(2024);
-  const [selectedDay, setSelectedDay] = useState(10);
+  const allAppointments = useAppointmentStore((s) => s.appointments);
+  const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
+  const isLoading = useAppointmentStore((s) => s.isLoading);
+
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedDay, setSelectedDay] = useState(new Date().getDate());
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   useEffect(() => {
     if (route?.params?.showSuccess) {
@@ -69,7 +64,34 @@ export default function CalendarScreen({ navigation, route }) {
 
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
   const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
-  const appointments = APPOINTMENTS_BY_DAY[selectedDay] || [];
+
+  // Build day load map from store data for current month
+  const dayLoadMap = {};
+  allAppointments.forEach((apt) => {
+    const aptDate = new Date(apt.date);
+    if (aptDate.getMonth() === currentMonth && aptDate.getFullYear() === currentYear) {
+      const day = aptDate.getDate();
+      const count = (dayLoadMap[day] || 0) + 1;
+      dayLoadMap[day] = count;
+    }
+  });
+  const getDayLoad = (day) => {
+    const count = dayLoadMap[day] || 0;
+    if (count === 0) return null;
+    if (count >= 5) return 'high';
+    if (count >= 3) return 'med';
+    return 'low';
+  };
+
+  // Get appointments for selected day
+  const selectedDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+  const appointments = allAppointments
+    .filter((apt) => apt.date === selectedDateStr)
+    .map((apt) => ({
+      ...apt,
+      period: parseInt(apt.time.split(':')[0], 10) < 12 ? 'AM' : 'PM',
+      desc: apt.type || apt.notes || '',
+    }));
 
   const prevMonth = () => {
     if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); }
@@ -90,7 +112,7 @@ export default function CalendarScreen({ navigation, route }) {
     }
     // Day cells
     for (let day = 1; day <= daysInMonth; day++) {
-      const load = DAY_DATA[day] || null;
+      const load = getDayLoad(day);
       const isSelected = day === selectedDay;
       const isWeekend = ((firstDay + day - 1) % 7 >= 5);
       cells.push(
@@ -120,6 +142,7 @@ export default function CalendarScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <LoadingOverlay visible={isLoading} />
       <AppHeader />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Page Title */}
@@ -187,8 +210,8 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                   <View style={styles.timeDivider} />
                   <View>
-                    <Text style={styles.aptName}>{apt.name}</Text>
-                    <Text style={styles.aptDesc}>{apt.desc}</Text>
+                    <Text style={styles.aptName}>{apt.patientName || apt.name || 'İsimsiz'}</Text>
+                    <Text style={styles.aptDesc}>{apt.notes || apt.desc || 'Belirtilmedi'}</Text>
                   </View>
                 </View>
                 <TouchableOpacity style={styles.moreBtn}>

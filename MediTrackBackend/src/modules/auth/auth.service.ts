@@ -2,19 +2,15 @@ import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
 import type { AuthUser } from '../../common/types.js';
 import { env } from '../../config/env.js';
-import { consumeRefreshToken, saveRefreshToken } from './token-store.js';
+import { hashPassword, verifyPassword } from '../../common/password.js';
+import { prisma } from '../../plugins/prisma.js';
+import { saveRefreshToken, consumeRefreshToken } from './token-store.js';
+import type { RegisterInput } from './auth.schemas.js';
 
 type AuthTokens = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
-};
-
-const DEMO_USER: AuthUser & { password: string } = {
-  userId: 'doctor-1',
-  email: 'doktor@meditrack.app',
-  role: 'doctor',
-  password: 'Password123!',
 };
 
 function refreshTtlMs() {
@@ -25,38 +21,94 @@ function refreshTtlMs() {
 }
 
 export async function login(app: FastifyInstance, email: string, password: string): Promise<AuthTokens | null> {
-  if (email !== DEMO_USER.email || password !== DEMO_USER.password) {
+  // Look up user from database
+  const dbUser = await prisma.user.findUnique({ where: { email } });
+
+  if (!dbUser || !dbUser.isActive) {
+    return null;
+  }
+
+  // Verify password using bcrypt
+  const isValid = await verifyPassword(password, dbUser.passwordHash);
+  if (!isValid) {
     return null;
   }
 
   const user: AuthUser = {
-    userId: DEMO_USER.userId,
-    email: DEMO_USER.email,
-    role: DEMO_USER.role,
+    userId: dbUser.id,
+    email: dbUser.email,
+    role: dbUser.role as AuthUser['role'],
   };
 
   const accessToken = await app.jwt.sign(user);
   const refreshToken = crypto.randomUUID() + crypto.randomUUID();
-  saveRefreshToken(refreshToken, user.userId, Date.now() + refreshTtlMs());
+  await saveRefreshToken(refreshToken, user, Date.now() + refreshTtlMs());
+
+  return { accessToken, refreshToken, user };
+}
+
+export async function register(app: FastifyInstance, payload: RegisterInput): Promise<AuthTokens> {
+  const existingUser = await prisma.user.findUnique({ where: { email: payload.email } });
+  if (existingUser) {
+    throw new Error('EMAIL_EXISTS');
+  }
+
+  const hashedPassword = await hashPassword(payload.password);
+
+  const dbUser = await prisma.user.create({
+    data: {
+      email: payload.email,
+      passwordHash: hashedPassword,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      title: payload.title || 'Doktor',
+      department: payload.department || 'Bilinmiyor',
+      role: 'doctor', // Default role for now
+    },
+  });
+
+  const user: AuthUser = {
+    userId: dbUser.id,
+    email: dbUser.email,
+    role: dbUser.role as AuthUser['role'],
+  };
+
+  const accessToken = await app.jwt.sign(user);
+  const refreshToken = crypto.randomUUID() + crypto.randomUUID();
+  await saveRefreshToken(refreshToken, user, Date.now() + refreshTtlMs());
 
   return { accessToken, refreshToken, user };
 }
 
 export async function rotateRefreshToken(app: FastifyInstance, token: string): Promise<AuthTokens | null> {
-  const consumed = consumeRefreshToken(token);
+  const consumed = await consumeRefreshToken(token);
   if (!consumed || Date.now() > consumed.expiresAt) {
     return null;
   }
 
-  const user: AuthUser = {
-    userId: consumed.userId,
-    email: DEMO_USER.email,
-    role: DEMO_USER.role,
-  };
+  const user: AuthUser = consumed.user;
 
   const accessToken = await app.jwt.sign(user);
   const refreshToken = crypto.randomUUID() + crypto.randomUUID();
-  saveRefreshToken(refreshToken, user.userId, Date.now() + refreshTtlMs());
+  await saveRefreshToken(refreshToken, user, Date.now() + refreshTtlMs());
 
   return { accessToken, refreshToken, user };
+}
+
+/**
+ * Get full user profile from DB.
+ */
+export async function getUserProfile(userId: string) {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!dbUser) return null;
+
+  return {
+    userId: dbUser.id,
+    email: dbUser.email,
+    role: dbUser.role,
+    firstName: dbUser.firstName,
+    lastName: dbUser.lastName,
+    title: dbUser.title,
+    department: dbUser.department,
+  };
 }

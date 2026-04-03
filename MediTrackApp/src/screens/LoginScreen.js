@@ -7,15 +7,52 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import FormInput from '../components/FormInput';
 import PrimaryButton from '../components/PrimaryButton';
+import LoadingOverlay from '../components/LoadingOverlay';
+import ErrorToast from '../components/ErrorToast';
+import { useAuthStore } from '../store/useAuthStore';
+import { validateForm, validateEmail, validatePassword } from '../utils/validators';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [localGlobalError, setLocalGlobalError] = useState(null);
+  
+  const login = useAuthStore((s) => s.login);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  const handleBlur = (field, value, validator) => {
+    const error = validator(value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  const handleLogin = async () => {
+    const { errors: validationErrors, hasError } = validateForm({
+      email: { value: email, validator: validateEmail },
+      password: { value: password, validator: validatePassword },
+    });
+
+    setErrors(validationErrors);
+
+    if (hasError) return;
+
+    const result = await login(email, password);
+    
+    if (!result.success) {
+      setLocalGlobalError(result.error?.message || 'Giriş yapılamadı. E-posta veya şifre hatalı.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
+      <LoadingOverlay visible={isLoading} message="Giriş yapılıyor..." />
+      <ErrorToast 
+        visible={!!localGlobalError} 
+        message={localGlobalError} 
+        onHide={() => setLocalGlobalError(null)} 
+      />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         
         {/* Form Section */}
@@ -31,14 +68,19 @@ export default function LoginScreen({ navigation }) {
               icon="mail-outline"
               placeholder="doktor@hastane.com"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(val) => { setEmail(val); setErrors(prev => ({...prev, email: null})); }}
+              onBlur={() => handleBlur('email', email, validateEmail)}
+              error={errors.email}
               keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
             />
 
             <View>
               <View style={styles.passwordLabelRow}>
                 <Text style={styles.fieldLabel}>ŞİFRE</Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                   <Text style={styles.forgotLink}>Şifremi Unuttum</Text>
                 </TouchableOpacity>
               </View>
@@ -48,8 +90,13 @@ export default function LoginScreen({ navigation }) {
                   <FormInput
                     placeholder="••••••••"
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(val) => { setPassword(val); setErrors(prev => ({...prev, password: null})); }}
+                    onBlur={() => handleBlur('password', password, validatePassword)}
+                    error={errors.password}
                     secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="password"
                     style={{ marginBottom: 0 }}
                   />
                 </View>
@@ -77,28 +124,9 @@ export default function LoginScreen({ navigation }) {
 
             <PrimaryButton
               title="Giriş Yap"
-              onPress={() => navigation.replace('Main')}
+              onPress={handleLogin}
               style={{ marginTop: 8 }}
             />
-          </View>
-
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>VEYA</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Social Login */}
-          <View style={styles.socialRow}>
-            <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-google" size={18} color={Colors.onSurface} />
-              <Text style={styles.socialButtonText}>Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={18} color={Colors.onSurface} />
-              <Text style={styles.socialButtonText}>Apple</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Register Link */}
