@@ -1,31 +1,41 @@
-type RefreshRecord = {
-  userId: string;
+import type { AuthUser } from '../../common/types.js';
+import { redis } from '../../plugins/redis.js';
+
+const TOKEN_PREFIX = 'refresh_token:';
+
+type StoredToken = {
+  user: AuthUser;
   expiresAt: number;
 };
 
-const refreshStore = new Map<string, RefreshRecord>();
+/**
+ * Save a refresh token to Redis with TTL.
+ */
+export async function saveRefreshToken(token: string, user: AuthUser, expiresAt: number): Promise<void> {
+  const data: StoredToken = { user, expiresAt };
+  const ttlMs = expiresAt - Date.now();
+  const ttlSeconds = Math.max(Math.ceil(ttlMs / 1000), 1);
 
-export function saveRefreshToken(token: string, userId: string, expiresAt: number) {
-  refreshStore.set(token, { userId, expiresAt });
+  await redis.set(
+    `${TOKEN_PREFIX}${token}`,
+    JSON.stringify(data),
+    'EX',
+    ttlSeconds,
+  );
 }
 
-export function consumeRefreshToken(token: string): RefreshRecord | null {
-  const value = refreshStore.get(token);
-  if (!value) {
-    return null;
-  }
-  refreshStore.delete(token);
-  return value;
-}
+/**
+ * Consume (get and delete) a refresh token from Redis.
+ * Returns null if the token doesn't exist.
+ */
+export async function consumeRefreshToken(token: string): Promise<StoredToken | null> {
+  const key = `${TOKEN_PREFIX}${token}`;
+  const raw = await redis.get(key);
 
-export function isRefreshTokenValid(token: string, userId: string): boolean {
-  const value = refreshStore.get(token);
-  if (!value) {
-    return false;
-  }
-  if (value.userId !== userId || Date.now() > value.expiresAt) {
-    refreshStore.delete(token);
-    return false;
-  }
-  return true;
+  if (!raw) return null;
+
+  // Delete after reading (one-time use)
+  await redis.del(key);
+
+  return JSON.parse(raw) as StoredToken;
 }

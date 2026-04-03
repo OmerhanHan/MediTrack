@@ -1,11 +1,11 @@
 import { createAppointmentSchema } from './appointments.schemas.js';
 import { createAppointment, listAppointments } from './appointments.service.js';
 export async function appointmentRoutes(app) {
-    app.get('/appointments', { preHandler: [app.authenticate] }, async (request, reply) => {
+    app.get('/appointments', { preHandler: [app.authenticate, app.requireRoles('doctor', 'staff', 'admin')] }, async (request, reply) => {
         const data = listAppointments(request.user.userId);
         return reply.code(200).send({ data });
     });
-    app.post('/appointments', { preHandler: [app.authenticate] }, async (request, reply) => {
+    app.post('/appointments', { preHandler: [app.authenticate, app.requireRoles('doctor', 'staff')] }, async (request, reply) => {
         const parsed = createAppointmentSchema.safeParse(request.body);
         if (!parsed.success) {
             return reply.code(400).send({ message: 'Invalid request body', errors: parsed.error.flatten() });

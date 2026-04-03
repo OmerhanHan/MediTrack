@@ -1,6 +1,8 @@
+import { prisma } from '../../plugins/prisma.js';
+import { encrypt, decrypt, encryptIfPresent, decryptIfPresent } from '../../common/encryption.js';
 import type { CreateAppointmentInput } from './appointments.schemas.js';
 
-export type Appointment = {
+export type AppointmentResponse = {
   id: string;
   doctorId: string;
   patientName: string;
@@ -8,35 +10,86 @@ export type Appointment = {
   date: string;
   time: string;
   notes: string;
+  status: string;
+  type: string | null;
   createdAt: string;
 };
 
-const appointments: Appointment[] = [];
-
-export function listAppointments(doctorId: string): Appointment[] {
-  return appointments.filter((item) => item.doctorId === doctorId);
+/**
+ * Decrypt an appointment row from DB into a readable response.
+ */
+function decryptAppointment(row: {
+  id: string;
+  doctorId: string;
+  encryptedName: string;
+  encryptedPhone: string;
+  date: string;
+  time: string;
+  encryptedNotes: string | null;
+  status: string;
+  type: string | null;
+  createdAt: Date;
+}): AppointmentResponse {
+  return {
+    id: row.id,
+    doctorId: row.doctorId,
+    patientName: decrypt(row.encryptedName),
+    phone: decrypt(row.encryptedPhone),
+    date: row.date,
+    time: row.time,
+    notes: decryptIfPresent(row.encryptedNotes) ?? '',
+    status: row.status,
+    type: row.type,
+    createdAt: row.createdAt.toISOString(),
+  };
 }
 
-export function createAppointment(doctorId: string, payload: CreateAppointmentInput): Appointment {
-  const conflict = appointments.find(
-    (item) => item.doctorId === doctorId && item.date === payload.date && item.time === payload.time,
-  );
+/**
+ * List all appointments for a doctor, decrypted.
+ */
+export async function listAppointments(doctorId: string): Promise<AppointmentResponse[]> {
+  const rows = await prisma.appointment.findMany({
+    where: { doctorId },
+    orderBy: [{ date: 'asc' }, { time: 'asc' }],
+  });
+
+  return rows.map(decryptAppointment);
+}
+
+/**
+ * Create an appointment with encrypted patient data.
+ */
+export async function createAppointment(
+  doctorId: string,
+  payload: CreateAppointmentInput,
+): Promise<AppointmentResponse> {
+  // Check for slot conflict (same doctor, same date+time)
+  const conflict = await prisma.appointment.findUnique({
+    where: {
+      doctorId_date_time: {
+        doctorId,
+        date: payload.date,
+        time: payload.time,
+      },
+    },
+  });
 
   if (conflict) {
     throw new Error('APPOINTMENT_CONFLICT');
   }
 
-  const appointment: Appointment = {
-    id: `apt-${appointments.length + 1}`,
-    doctorId,
-    patientName: payload.patientName,
-    phone: payload.phone,
-    date: payload.date,
-    time: payload.time,
-    notes: payload.notes ?? '',
-    createdAt: new Date().toISOString(),
-  };
+  const row = await prisma.appointment.create({
+    data: {
+      doctorId,
+      encryptedName: encrypt(payload.patientName),
+      encryptedPhone: encrypt(payload.phone),
+      date: payload.date,
+      time: payload.time,
+      encryptedNotes: encryptIfPresent(payload.notes),
+      type: payload.notes?.split(' ')[0] || null,
+      status: 'upcoming',
+    },
+  });
 
-  appointments.push(appointment);
-  return appointment;
+  return decryptAppointment(row);
 }

@@ -19,8 +19,8 @@ npm run start
 
 1. In-memory token store yerine Redis ekle
 2. In-memory appointment store yerine PostgreSQL + Prisma gec
-3. RBAC policy middleware ekle (doctor/staff/admin)
-4. Audit log altyapisini ekle
+3. Demo kullanici modelini DB tabanli hale getir + parola hashle (argon2/bcrypt)
+4. Audit log olaylarini kalici depoya aktar (DB veya SIEM)
 5. Test altyapisini ekle (unit + integration)
 6. CI security gate'lerini ekle (SAST, dependency scan, secret scan)
 
@@ -30,7 +30,9 @@ npm run start
 - [x] Paket kurulumu tamamlandi
 - [x] `.env` hazirlandi
 - [x] Build dogrulandi
+- [x] RBAC middleware eklendi
+- [x] Audit log hook'u eklendi
 - [ ] Redis entegrasyonu
 - [ ] PostgreSQL + Prisma entegrasyonu
-- [ ] RBAC ve audit log
+- [ ] Kalici audit log ve kullanici modeli
 - [ ] Test ve CI guvenlik kapilari
