@@ -7,6 +7,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../theme/colors';
 import FormInput from '../components/FormInput';
 import PrimaryButton from '../components/PrimaryButton';
+import LoadingOverlay from '../components/LoadingOverlay';
+import ErrorToast from '../components/ErrorToast';
+import { useAuthStore } from '../store/useAuthStore';
+import { validateForm, validateEmail, validatePassword, validateName } from '../utils/validators';
 
 const SPECIALTIES = [
   'Kardiyoloji', 'İç Hastalıkları (Dahiliye)', 'Nöroloji',
@@ -22,13 +26,70 @@ export default function DoctorRegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPicker, setShowPicker] = useState(null); // 'specialty' | 'level' | null
+  const [errors, setErrors] = useState({});
+  const [globalError, setGlobalError] = useState(null);
 
-  const handleRegister = () => {
-    setShowSuccess(true);
+  const registerUser = useAuthStore((s) => s.register);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  const handleBlur = (field, value, validator) => {
+    const error = validator(value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  const handleRegister = async () => {
+    const { errors: validationErrors, hasError } = validateForm({
+      name: { value: name, validator: validateName },
+      email: { value: email, validator: validateEmail },
+      password: { value: password, validator: validatePassword },
+    });
+
+    const newErrors = { ...validationErrors };
+    let finalHasError = hasError;
+
+    if (!specialty) {
+      newErrors.specialty = 'Branş seçimi zorunludur';
+      finalHasError = true;
+    }
+    if (!level) {
+      newErrors.level = 'Uzmanlık seviyesi zorunludur';
+      finalHasError = true;
+    }
+
+    setErrors(newErrors);
+
+    if (finalHasError) return;
+
+    setGlobalError(null);
+
+    const names = name.trim().split(' ');
+    const firstName = names[0] || 'Doktor';
+    let lastName = names.length > 1 ? names.slice(1).join(' ') : ' ';
+    if (lastName.trim().length < 2) {
+      lastName = 'Bilinmiyor';
+    }
+
+    const result = await registerUser({
+      firstName,
+      lastName,
+      email,
+      password,
+      specialty,
+      title: level,
+      department: specialty,
+    });
+
+    if (result.success) {
+      setShowSuccess(true);
+    } else {
+      setGlobalError(result.error?.message || 'Hesap oluşturulurken bir hata oluştu');
+    }
   };
 
   return (
     <SafeAreaView style={styles.safe}>
+      <LoadingOverlay visible={isLoading} message="Hesap Oluşturuluyor..." />
+      <ErrorToast visible={!!globalError} message={globalError} onHide={() => setGlobalError(null)} />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.headerSection}>
@@ -50,7 +111,11 @@ export default function DoctorRegisterScreen({ navigation }) {
                 icon="person-outline"
                 placeholder="Dr. Ahmet Yılmaz"
                 value={name}
-                onChangeText={setName}
+                onChangeText={(val) => { setName(val); setErrors(prev => ({...prev, name: null})); }}
+                onBlur={() => handleBlur('name', name, validateName)}
+                error={errors.name}
+                autoCapitalize="words"
+                autoCorrect={false}
               />
             </View>
           </View>
@@ -59,30 +124,42 @@ export default function DoctorRegisterScreen({ navigation }) {
           <View style={styles.pickerField}>
             <Text style={styles.pickerLabel}>BRANŞ</Text>
             <TouchableOpacity
-              style={styles.pickerButton}
+              style={[styles.pickerButton, errors.specialty && { borderColor: '#E53935', borderWidth: 1.5, backgroundColor: 'rgba(229, 57, 53, 0.04)' }]}
               onPress={() => setShowPicker('specialty')}
             >
-              <Ionicons name="fitness-outline" size={18} color={Colors.outline} style={{ marginRight: 10 }} />
+              <Ionicons name="fitness-outline" size={18} color={errors.specialty ? '#E53935' : Colors.outline} style={{ marginRight: 10 }} />
               <Text style={[styles.pickerText, !specialty && styles.pickerPlaceholder]}>
                 {specialty || 'Branş Seçiniz'}
               </Text>
               <Ionicons name="chevron-down" size={18} color={Colors.outline} />
             </TouchableOpacity>
+            {errors.specialty && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginLeft: 4 }}>
+                <Ionicons name="alert-circle" size={13} color="#E53935" />
+                <Text style={{ fontSize: 12, color: '#E53935', marginLeft: 4, fontWeight: '500' }}>{errors.specialty}</Text>
+              </View>
+            )}
           </View>
 
           {/* Level Picker */}
           <View style={styles.pickerField}>
             <Text style={styles.pickerLabel}>UZMANLIK SEVİYESİ</Text>
             <TouchableOpacity
-              style={styles.pickerButton}
+              style={[styles.pickerButton, errors.level && { borderColor: '#E53935', borderWidth: 1.5, backgroundColor: 'rgba(229, 57, 53, 0.04)' }]}
               onPress={() => setShowPicker('level')}
             >
-              <Ionicons name="school-outline" size={18} color={Colors.outline} style={{ marginRight: 10 }} />
+              <Ionicons name="school-outline" size={18} color={errors.level ? '#E53935' : Colors.outline} style={{ marginRight: 10 }} />
               <Text style={[styles.pickerText, !level && styles.pickerPlaceholder]}>
                 {level || 'Seviye Seçiniz'}
               </Text>
               <Ionicons name="chevron-down" size={18} color={Colors.outline} />
             </TouchableOpacity>
+            {errors.level && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginLeft: 4 }}>
+                <Ionicons name="alert-circle" size={13} color="#E53935" />
+                <Text style={{ fontSize: 12, color: '#E53935', marginLeft: 4, fontWeight: '500' }}>{errors.level}</Text>
+              </View>
+            )}
           </View>
 
           <FormInput
@@ -90,8 +167,13 @@ export default function DoctorRegisterScreen({ navigation }) {
             icon="mail-outline"
             placeholder="ornek@hastane.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(val) => { setEmail(val); setErrors(prev => ({...prev, email: null})); }}
+            onBlur={() => handleBlur('email', email, validateEmail)}
+            error={errors.email}
             keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
           />
 
           <FormInput
@@ -99,8 +181,13 @@ export default function DoctorRegisterScreen({ navigation }) {
             icon="lock-closed-outline"
             placeholder="••••••••"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(val) => { setPassword(val); setErrors(prev => ({...prev, password: null})); }}
+            onBlur={() => handleBlur('password', password, validatePassword)}
+            error={errors.password}
             secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="password"
           />
 
           <PrimaryButton
@@ -131,8 +218,13 @@ export default function DoctorRegisterScreen({ navigation }) {
                 key={item}
                 style={styles.pickerOption}
                 onPress={() => {
-                  if (showPicker === 'specialty') setSpecialty(item);
-                  else setLevel(item);
+                  if (showPicker === 'specialty') {
+                    setSpecialty(item);
+                    setErrors(prev => ({...prev, specialty: null}));
+                  } else {
+                    setLevel(item);
+                    setErrors(prev => ({...prev, level: null}));
+                  }
                   setShowPicker(null);
                 }}
               >

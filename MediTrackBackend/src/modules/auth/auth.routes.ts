@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { loginSchema, refreshSchema } from './auth.schemas.js';
-import { login, rotateRefreshToken } from './auth.service.js';
+import { login, rotateRefreshToken, getUserProfile } from './auth.service.js';
 
 export async function authRoutes(app: FastifyInstance) {
   app.post('/auth/login', async (request, reply) => {
@@ -14,7 +14,13 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send({ message: 'Invalid credentials' });
     }
 
-    return reply.code(200).send(tokenSet);
+    // Return full profile alongside tokens
+    const profile = await getUserProfile(tokenSet.user.userId);
+
+    return reply.code(200).send({
+      ...tokenSet,
+      user: profile || tokenSet.user,
+    });
   });
 
   app.post('/auth/refresh', async (request, reply) => {
@@ -32,6 +38,10 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   app.get('/auth/me', { preHandler: [app.authenticate] }, async (request, reply) => {
-    return reply.code(200).send({ user: request.user });
+    const profile = await getUserProfile(request.user.userId);
+    if (!profile) {
+      return reply.code(404).send({ message: 'User not found' });
+    }
+    return reply.code(200).send({ user: profile });
   });
 }

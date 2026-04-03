@@ -6,17 +6,28 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import AppHeader from '../components/AppHeader';
 import FormInput from '../components/FormInput';
+import DatePickerInput from '../components/DatePickerInput';
 import PrimaryButton from '../components/PrimaryButton';
+import LoadingOverlay from '../components/LoadingOverlay';
+import ErrorToast from '../components/ErrorToast';
+import { useAppointmentStore } from '../store/useAppointmentStore';
+import { validateForm, validateName, validatePhone } from '../utils/validators';
 
 export default function AppointmentEntryScreen({ navigation, route }) {
   const params = route?.params || {};
+  const addAppointment = useAppointmentStore((s) => s.addAppointment);
 
-  const [name, setName] = useState(params.name || 'Ahmet Yılmaz');
-  const [phone, setPhone] = useState(params.phone || '0532 123 45 67');
-  const [date, setDate] = useState(params.date || '2023-11-25');
-  const [time, setTime] = useState(params.time || '14:30');
-  const [notes, setNotes] = useState(params.notes || 'Rutin diş kontrolü ve temizlik işlemi.');
+  const [name, setName] = useState(params.name || '');
+  const [phone, setPhone] = useState(params.phone || '');
+  const [date, setDate] = useState(null);
+  const [formattedDate, setFormattedDate] = useState(params.date || '');
+  const [time, setTime] = useState(null);
+  const [formattedTime, setFormattedTime] = useState(params.time || '');
+  const [notes, setNotes] = useState(params.notes || '');
   const [showConfirm, setShowConfirm] = useState(Boolean(params.openConfirm));
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [globalError, setGlobalError] = useState(null);
 
   useEffect(() => {
     if (route?.params?.openConfirm) {
@@ -24,8 +35,57 @@ export default function AppointmentEntryScreen({ navigation, route }) {
     }
   }, [route?.params?.openConfirm]);
 
-  const handleSubmit = () => setShowConfirm(true);
-  const handleConfirm = () => {
+  const handleSubmit = () => {
+    const { errors: validationErrors, hasError } = validateForm({
+      name: { value: name, validator: validateName },
+      phone: { value: phone, validator: validatePhone },
+    });
+
+    const newErrors = { ...validationErrors };
+    let finalHasError = hasError;
+
+    if (!formattedDate) {
+      newErrors.date = 'Tarih seçiniz';
+      finalHasError = true;
+    }
+    if (!formattedTime) {
+      newErrors.time = 'Saat seçiniz';
+      finalHasError = true;
+    }
+
+    setErrors(newErrors);
+
+    if (!finalHasError) {
+      setShowConfirm(true);
+    }
+  };
+
+  const handleBlur = (field, value, validator) => {
+    const error = validator(value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    setGlobalError(null);
+    
+    // API'nin beklediği payload formata göre
+    const result = await addAppointment({
+      patientName: name, // Backend şu an patientName bekliyor schema'da
+      phone,
+      date: formattedDate,
+      time: formattedTime,
+      notes,
+    });
+    
+    setIsSubmitting(false);
+
+    if (!result.success) {
+      setShowConfirm(false);
+      setGlobalError(result.error?.message || 'Randevu eklenirken hata oluştu.');
+      return;
+    }
+
     setShowConfirm(false);
     if (params.sourceScreen) {
       navigation.replace(params.sourceScreen, { showSuccess: true });
@@ -39,6 +99,12 @@ export default function AppointmentEntryScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <LoadingOverlay visible={isSubmitting} message="Randevu Kaydediliyor..." />
+      <ErrorToast 
+        visible={!!globalError} 
+        message={globalError} 
+        onHide={() => setGlobalError(null)} 
+      />
       <AppHeader />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Back button + Title */}
@@ -63,36 +129,53 @@ export default function AppointmentEntryScreen({ navigation, route }) {
             icon="person-outline"
             placeholder="Örn: Ahmet Yılmaz"
             value={name}
-            onChangeText={setName}
+            onChangeText={(val) => { setName(val); setErrors(prev => ({...prev, name: null})); }}
+            onBlur={() => handleBlur('name', name, validateName)}
+            error={errors.name}
+            autoCapitalize="words"
+            autoCorrect={false}
           />
           <FormInput
             label="TELEFON NUMARASI"
             icon="call-outline"
             placeholder="05XX XXX XX XX"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={(val) => { setPhone(val); setErrors(prev => ({...prev, phone: null})); }}
+            onBlur={() => handleBlur('phone', phone, validatePhone)}
+            error={errors.phone}
             keyboardType="phone-pad"
+            autoCorrect={false}
+            maxLength={15}
           />
 
           {/* Appointment Details */}
           <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Randevu ve İşlem Planı</Text>
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <FormInput
+              <DatePickerInput
                 label="RANDEVU TARİHİ"
-                icon="calendar-outline"
-                placeholder="GG/AA/YYYY"
+                mode="date"
                 value={date}
-                onChangeText={setDate}
+                error={errors.date}
+                minimumDate={new Date()}
+                onChange={(selectedDate, formatted) => {
+                  setDate(selectedDate);
+                  setFormattedDate(formatted);
+                  setErrors(prev => ({...prev, date: null}));
+                }}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <FormInput
+              <DatePickerInput
                 label="RANDEVU SAATİ"
-                icon="time-outline"
-                placeholder="SS:DD"
+                mode="time"
                 value={time}
-                onChangeText={setTime}
+                error={errors.time}
+                onChange={(selectedDate, formatted) => {
+                  setTime(selectedDate);
+                  setFormattedTime(formatted);
+                  setErrors(prev => ({...prev, time: null}));
+                }}
               />
             </View>
           </View>
@@ -135,7 +218,7 @@ export default function AppointmentEntryScreen({ navigation, route }) {
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Tarih & Saat:</Text>
-                <Text style={styles.summaryValue}>{date} / {time}</Text>
+                <Text style={styles.summaryValue}>{formattedDate} / {formattedTime}</Text>
               </View>
               <View style={{ paddingTop: 8 }}>
                 <Text style={styles.summaryLabel}>Notlar:</Text>

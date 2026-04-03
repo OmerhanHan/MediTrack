@@ -9,8 +9,15 @@ export default function FormInput({
   placeholder,
   value,
   onChangeText,
+  error,
+  onBlur,
   secureTextEntry = false,
   keyboardType = 'default',
+  autoCapitalize = 'sentences',
+  autoCorrect = true,
+  autoComplete = 'off',
+  maxLength,
+  editable = true,
   multiline = false,
   numberOfLines = 1,
   style,
@@ -18,9 +25,21 @@ export default function FormInput({
   return (
     <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={[styles.inputWrapper, multiline && styles.multilineWrapper]}>
+      <View
+        style={[
+          styles.inputWrapper,
+          multiline && styles.multilineWrapper,
+          !editable && styles.disabledWrapper,
+          error && styles.inputError,
+        ]}
+      >
         {icon && (
-          <Ionicons name={icon} size={18} color={Colors.outlineVariant} style={styles.icon} />
+          <Ionicons
+            name={icon}
+            size={18}
+            color={error ? '#E53935' : Colors.outlineVariant}
+            style={styles.icon}
+          />
         )}
         <TextInput
           style={[styles.input, multiline && styles.multilineInput, !icon && { paddingLeft: 0 }]}
@@ -28,13 +47,25 @@ export default function FormInput({
           placeholderTextColor={Colors.outlineVariant}
           value={value}
           onChangeText={onChangeText}
+          onBlur={onBlur}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+          editable={editable}
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
         />
       </View>
+      {error && (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={13} color="#E53935" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -62,6 +93,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  inputError: {
+    borderColor: '#E53935',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(229, 57, 53, 0.04)',
+  },
   multilineWrapper: {
     alignItems: 'flex-start',
     paddingVertical: 10,
@@ -78,5 +114,20 @@ const styles = StyleSheet.create({
   multilineInput: {
     minHeight: 80,
     paddingTop: 2,
+  },
+  disabledWrapper: {
+    opacity: 0.6,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#E53935',
+    marginLeft: 4,
+    fontWeight: '500',
   },
 });

@@ -6,31 +6,34 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../theme/colors';
 import AppHeader from '../components/AppHeader';
-
-const APPOINTMENTS = [
-  {
-    id: '1', time: '09:30', name: 'Ahmet Yılmaz', phone: '0532 123 45 67', date: '2026-03-30', status: 'completed', type: 'Tamamlandı',
-  },
-  {
-    id: '2', time: '10:45', name: 'Elif Demir', phone: '0541 222 11 33', date: '2026-03-30', status: 'next', type: 'Kronik Takip',
-  },
-  {
-    id: '3', time: '11:30', name: 'Caner Özcan', phone: '0555 888 90 12', date: '2026-03-30', status: 'upcoming', type: 'Laboratuvar',
-  },
-  {
-    id: '4', time: '13:15', name: 'Zeynep Ak', phone: '0533 444 22 10', date: '2026-03-30', status: 'upcoming', type: 'İlk Muayene',
-  },
-];
+import LoadingOverlay from '../components/LoadingOverlay';
+import { useAuthStore } from '../store/useAuthStore';
+import { useAppointmentStore } from '../store/useAppointmentStore';
 
 export default function DashboardScreen({ navigation, route }) {
+  const user = useAuthStore((s) => s.user);
+  const appointments = useAppointmentStore((s) => s.appointments);
+  const getDailyStats = useAppointmentStore((s) => s.getDailyStats);
+  const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
+  const isLoading = useAppointmentStore((s) => s.isLoading);
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayAppointments = appointments.filter((apt) => apt.date === today);
+  const stats = getDailyStats(today);
+  const displayName = user ? `Dr. ${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Dr.';
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  useEffect(() => {
     if (route?.params?.showSuccess) {
       setShowSuccessToast(true);
       navigation.setParams({ showSuccess: false });
+      fetchAppointments(); // Refresh after new appointment
     }
   }, [route?.params?.showSuccess, navigation]);
 
@@ -50,13 +53,14 @@ export default function DashboardScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <LoadingOverlay visible={isLoading} />
       <AppHeader />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.greeting}>Hoş Geldiniz, Dr. Aras</Text>
+          <Text style={styles.greeting}>Hoş Geldiniz, {displayName}</Text>
           <Text style={styles.heroTitle}>
-            Bugün <Text style={styles.heroHighlight}>12 Randevunuz</Text> Var.
+            Bugün <Text style={styles.heroHighlight}>{stats.total} Randevunuz</Text> Var.
           </Text>
           <TouchableOpacity
             style={styles.addPatientBtn}
@@ -79,12 +83,19 @@ export default function DashboardScreen({ navigation, route }) {
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Randevular</Text>
             <TouchableOpacity style={styles.filterBtn}>
-              <Ionicons name="filter" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
+          {todayAppointments.length === 0 ? (
+            <View style={{ paddingVertical: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="calendar-clear-outline" size={32} color={Colors.surfaceContainerHigh} style={{ marginBottom: 8 }} />
+              <Text style={{ color: Colors.outlineVariant, fontSize: 14, fontWeight: '500' }}>
+                Bugün randevunuz bulunmamakta.
+              </Text>
+            </View>
+          ) : (
           <FlatList
-            data={APPOINTMENTS}
+            data={todayAppointments}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.appointmentsList}
@@ -112,7 +123,7 @@ export default function DashboardScreen({ navigation, route }) {
                     ]}>{item.time}</Text>
                   </View>
                   <View>
-                    <Text style={styles.patientName}>{item.name}</Text>
+                    <Text style={styles.patientName}>{item.patientName || item.name || 'İsimsiz'}</Text>
                     <Text style={[
                       styles.appointmentType,
                       item.status === 'completed' && styles.appointmentTypeCompleted,
@@ -131,12 +142,13 @@ export default function DashboardScreen({ navigation, route }) {
               </View>
             )}
           />
+          )}
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.viewAllBtn}
             onPress={() => navigation.navigate('Calendar')}
           >
-            <Text style={styles.viewAllText}>Tüm Randevuları Görüntüle (12)</Text>
+            <Text style={styles.viewAllText}>Tüm Randevuları Görüntüle ({appointments.length})</Text>
           </TouchableOpacity>
         </View>
 
@@ -149,22 +161,22 @@ export default function DashboardScreen({ navigation, route }) {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryRowLabel}>Tamamlanan</Text>
-            <Text style={styles.summaryRowValue}>4 / 12</Text>
+            <Text style={styles.summaryRowValue}>{stats.completed} / {stats.total}</Text>
           </View>
 
           {/* Progress Bar */}
           <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: '33%' }]} />
+            <View style={[styles.progressFill, { width: stats.total > 0 ? `${Math.round((stats.completed / stats.total) * 100)}%` : '0%' }]} />
           </View>
 
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
               <Text style={styles.statCardLabel}>Yeni Hasta</Text>
-              <Text style={styles.statCardValue}>3</Text>
+              <Text style={styles.statCardValue}>{stats.newPatients}</Text>
             </View>
             <View style={[styles.statCard, styles.statCardWarning]}>
               <Text style={[styles.statCardLabel, styles.statCardLabelWarning]}>Bekleyen</Text>
-              <Text style={[styles.statCardValue, styles.statCardValueWarning]}>8</Text>
+              <Text style={[styles.statCardValue, styles.statCardValueWarning]}>{stats.upcoming}</Text>
             </View>
           </View>
         </View>
@@ -188,7 +200,7 @@ export default function DashboardScreen({ navigation, route }) {
             <View style={styles.detailModalCard}>
               <View style={styles.detailModalRow}>
                 <Text style={styles.detailModalLabel}>Hasta:</Text>
-                <Text style={styles.detailModalValue}>{selectedAppointment?.name || '-'}</Text>
+                <Text style={styles.detailModalValue}>{selectedAppointment?.patientName || selectedAppointment?.name || '-'}</Text>
               </View>
               <View style={styles.detailModalRow}>
                 <Text style={styles.detailModalLabel}>Telefon:</Text>
