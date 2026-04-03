@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { appointmentRoutes } from './modules/appointments/appointments.routes.js';
+import patientsRoutes from './modules/patients/patients.routes.js';
 import { registerAudit } from './plugins/audit.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerAuthorization } from './plugins/authorization.js';
@@ -28,6 +29,7 @@ export async function buildApp() {
 
   await app.register(authRoutes, { prefix: '/api/v1' });
   await app.register(appointmentRoutes, { prefix: '/api/v1' });
+  await app.register(patientsRoutes, { prefix: '/api/v1/patients' });
 
   return app;
 }

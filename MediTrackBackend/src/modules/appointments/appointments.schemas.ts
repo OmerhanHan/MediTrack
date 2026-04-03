@@ -9,3 +9,12 @@ export const createAppointmentSchema = z.object({
 });
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+
+export const updateAppointmentSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  notes: z.string().max(500).optional(),
+  status: z.enum(['upcoming', 'completed', 'cancelled']).optional(),
+});
+
+export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
