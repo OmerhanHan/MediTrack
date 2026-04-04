@@ -20,6 +20,8 @@ const envSchema = z.object({
     .refine((value) => !value.includes('change-me'), 'JWT_REFRESH_SECRET must be replaced with a secure value'),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().min(1).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

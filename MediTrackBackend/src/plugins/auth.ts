@@ -1,27 +1,35 @@
-import jwt from '@fastify/jwt';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { AuthUser } from '../common/types.js';
-import { env } from '../config/env.js';
-
-declare module '@fastify/jwt' {
-  interface FastifyJWT {
-    user: AuthUser;
-    payload: AuthUser;
-  }
-}
+import { supabase } from '../config/supabase.js';
 
 export async function registerAuth(app: FastifyInstance) {
-  await app.register(jwt, {
-    secret: env.JWT_ACCESS_SECRET,
-    sign: {
-      expiresIn: env.JWT_ACCESS_TTL,
-    },
-  });
-
   app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      await request.jwtVerify();
-    } catch {
+      const authHeader = request.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new Error('Missing token');
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      const { data, error } = await supabase.auth.getUser(token);
+      
+      if (error || !data.user) {
+        throw new Error('Invalid token');
+      }
+
+      // First try to fetch user role from our public.users table
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      (request as any).user = {
+        userId: data.user.id,
+        email: data.user.email!,
+        role: (dbUser?.role as AuthUser['role']) || 'doctor',
+      };
+    } catch (err) {
       reply.code(401).send({ message: 'Unauthorized' });
     }
   });

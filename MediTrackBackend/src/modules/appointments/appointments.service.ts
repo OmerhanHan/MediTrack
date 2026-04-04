@@ -1,4 +1,4 @@
-import { prisma } from '../../plugins/prisma.js';
+import { supabase } from '../../config/supabase.js';
 import { encrypt, decrypt, encryptIfPresent, decryptIfPresent } from '../../common/encryption.js';
 import type { CreateAppointmentInput } from './appointments.schemas.js';
 import { sendSms } from '../../services/sms.js';
@@ -22,27 +22,27 @@ export type AppointmentResponse = {
  */
 function decryptAppointment(row: {
   id: string;
-  doctorId: string;
-  encryptedName: string;
-  encryptedPhone: string;
+  doctor_id: string;
+  encrypted_name: string;
+  encrypted_phone: string;
   date: string;
   time: string;
-  encryptedNotes: string | null;
+  encrypted_notes: string | null;
   status: string;
   type: string | null;
-  createdAt: Date;
+  created_at: string;
 }): AppointmentResponse {
   return {
     id: row.id,
-    doctorId: row.doctorId,
-    patientName: decrypt(row.encryptedName),
-    phone: decrypt(row.encryptedPhone),
+    doctorId: row.doctor_id,
+    patientName: decrypt(row.encrypted_name),
+    phone: decrypt(row.encrypted_phone),
     date: row.date,
     time: row.time,
-    notes: decryptIfPresent(row.encryptedNotes) ?? '',
+    notes: decryptIfPresent(row.encrypted_notes) ?? '',
     status: row.status,
     type: row.type,
-    createdAt: row.createdAt.toISOString(),
+    createdAt: row.created_at,
   };
 }
 
@@ -50,12 +50,16 @@ function decryptAppointment(row: {
  * List all appointments for a doctor, decrypted.
  */
 export async function listAppointments(doctorId: string): Promise<AppointmentResponse[]> {
-  const rows = await prisma.appointment.findMany({
-    where: { doctorId },
-    orderBy: [{ date: 'asc' }, { time: 'asc' }],
-  });
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('doctor_id', doctorId)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true });
 
-  return rows.map(decryptAppointment);
+  if (error) throw new Error(error.message);
+
+  return data.map(decryptAppointment);
 }
 
 /**
@@ -66,37 +70,45 @@ export async function createAppointment(
   payload: CreateAppointmentInput,
 ): Promise<AppointmentResponse> {
   // Check for slot conflict (same doctor, same date+time)
-  const conflict = await prisma.appointment.findUnique({
-    where: {
-      doctorId_date_time: {
-        doctorId,
-        date: payload.date,
-        time: payload.time,
-      },
-    },
-  });
+  const { data: conflict } = await supabase
+    .from('appointments')
+    .select('id')
+    .eq('doctor_id', doctorId)
+    .eq('date', payload.date)
+    .eq('time', payload.time)
+    .single();
 
   if (conflict) {
     throw new Error('APPOINTMENT_CONFLICT');
   }
 
-  const row = await prisma.appointment.create({
-    data: {
-      doctorId,
-      encryptedName: encrypt(payload.patientName),
-      encryptedPhone: encrypt(payload.phone),
+  const { data: row, error } = await supabase
+    .from('appointments')
+    .insert({
+      id: crypto.randomUUID().replace(/-/g, '').slice(0, 25), // Basic fallback ID mimicking cuid roughly, but Supabase handles defaults if we omitted, but our schema requires id text
+      doctor_id: doctorId,
+      encrypted_name: encrypt(payload.patientName),
+      encrypted_phone: encrypt(payload.phone),
       date: payload.date,
       time: payload.time,
-      encryptedNotes: encryptIfPresent(payload.notes),
+      encrypted_notes: encryptIfPresent(payload.notes),
       type: payload.notes?.split(' ')[0] || null,
       status: 'upcoming',
-    },
-  });
+    })
+    .select()
+    .single();
+
+  if (error || !row) throw new Error(error?.message || 'Failed to create appointment');
 
   // Get doctor details to include in SMS
-  const doctor = await prisma.user.findUnique({ where: { id: doctorId } });
+  const { data: doctor } = await supabase
+    .from('users')
+    .select('first_name, last_name')
+    .eq('id', doctorId)
+    .single();
+
   if (doctor) {
-    const docName = `${doctor.firstName} ${doctor.lastName}`;
+    const docName = `${doctor.first_name} ${doctor.last_name}`;
     const smsMsg = smsTemplates.appointmentCreated(docName, payload.date, payload.time);
     // Asynchronously send SMS (don't wait for completion)
     sendSms(payload.phone, smsMsg).catch(console.error);
@@ -110,35 +122,48 @@ export async function updateAppointment(
   appointmentId: string,
   payload: { date?: string; time?: string; notes?: string; status?: string }
 ): Promise<AppointmentResponse> {
-  const existing = await prisma.appointment.findFirst({
-    where: { id: appointmentId, doctorId }
-  });
+  const { data: existing } = await supabase
+    .from('appointments')
+    .select('id')
+    .eq('id', appointmentId)
+    .eq('doctor_id', doctorId)
+    .single();
+    
   if (!existing) throw new Error('APPOINTMENT_NOT_FOUND');
 
   const data: any = {};
   if (payload.date) data.date = payload.date;
   if (payload.time) data.time = payload.time;
   if (payload.notes !== undefined) {
-    data.encryptedNotes = encryptIfPresent(payload.notes);
+    data.encrypted_notes = encryptIfPresent(payload.notes);
     if (payload.notes) data.type = payload.notes.split(' ')[0];
   }
   if (payload.status) data.status = payload.status;
 
-  const row = await prisma.appointment.update({
-    where: { id: appointmentId },
-    data
-  });
+  const { data: row, error } = await supabase
+    .from('appointments')
+    .update(data)
+    .eq('id', appointmentId)
+    .select()
+    .single();
+
+  if (error || !row) throw new Error(error?.message || 'Failed to update appointment');
 
   return decryptAppointment(row);
 }
 
 export async function deleteAppointment(doctorId: string, appointmentId: string): Promise<void> {
-  const existing = await prisma.appointment.findFirst({
-    where: { id: appointmentId, doctorId }
-  });
+  const { data: existing } = await supabase
+    .from('appointments')
+    .select('id')
+    .eq('id', appointmentId)
+    .eq('doctor_id', doctorId)
+    .single();
+    
   if (!existing) throw new Error('APPOINTMENT_NOT_FOUND');
 
-  await prisma.appointment.delete({
-    where: { id: appointmentId }
-  });
+  await supabase
+    .from('appointments')
+    .delete()
+    .eq('id', appointmentId);
 }

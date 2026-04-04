@@ -1,10 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import crypto from 'node:crypto';
 import type { AuthUser } from '../../common/types.js';
-import { env } from '../../config/env.js';
-import { hashPassword, verifyPassword } from '../../common/password.js';
-import { prisma } from '../../plugins/prisma.js';
-import { saveRefreshToken, consumeRefreshToken } from './token-store.js';
+import { supabase } from '../../config/supabase.js';
 import type { RegisterInput } from './auth.schemas.js';
 
 type AuthTokens = {
@@ -13,101 +9,120 @@ type AuthTokens = {
   user: AuthUser;
 };
 
-function refreshTtlMs() {
-  const amount = Number(env.JWT_REFRESH_TTL.replace(/[^\d]/g, '')) || 7;
-  if (env.JWT_REFRESH_TTL.includes('d')) return amount * 24 * 60 * 60 * 1000;
-  if (env.JWT_REFRESH_TTL.includes('h')) return amount * 60 * 60 * 1000;
-  return amount * 1000;
-}
-
 export async function login(app: FastifyInstance, email: string, password: string): Promise<AuthTokens | null> {
-  // Look up user from database
-  const dbUser = await prisma.user.findUnique({ where: { email } });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-  if (!dbUser || !dbUser.isActive) {
+  if (error || !data.session || !data.user) {
     return null;
   }
 
-  // Verify password using bcrypt
-  const isValid = await verifyPassword(password, dbUser.passwordHash);
-  if (!isValid) {
+  // Check if they exist and are active in our public.users
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('role, is_active')
+    .eq('id', data.user.id)
+    .single();
+
+  if (!dbUser || !dbUser.is_active) {
     return null;
   }
 
   const user: AuthUser = {
-    userId: dbUser.id,
-    email: dbUser.email,
-    role: dbUser.role as AuthUser['role'],
+    userId: data.user.id,
+    email: data.user.email!,
+    role: (dbUser.role as AuthUser['role']) || 'doctor',
   };
 
-  const accessToken = await app.jwt.sign(user);
-  const refreshToken = crypto.randomUUID() + crypto.randomUUID();
-  await saveRefreshToken(refreshToken, user, Date.now() + refreshTtlMs());
-
-  return { accessToken, refreshToken, user };
+  return {
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+    user,
+  };
 }
 
 export async function register(app: FastifyInstance, payload: RegisterInput): Promise<AuthTokens> {
-  const existingUser = await prisma.user.findUnique({ where: { email: payload.email } });
-  if (existingUser) {
-    throw new Error('EMAIL_EXISTS');
+  // 1. Register with Supabase Auth
+  const { data, error } = await supabase.auth.signUp({
+    email: payload.email,
+    password: payload.password,
+  });
+
+  if (error || !data.user || !data.session) {
+    throw new Error(error?.message || 'Failed to sign up');
   }
 
-  const hashedPassword = await hashPassword(payload.password);
-
-  const dbUser = await prisma.user.create({
-    data: {
-      email: payload.email,
-      passwordHash: hashedPassword,
-      firstName: payload.firstName,
-      lastName: payload.lastName,
-      title: payload.title || 'Doktor',
-      department: payload.department || 'Bilinmiyor',
-      role: 'doctor', // Default role for now
-    },
+  // 2. Create the user profile in public.users
+  await supabase.from('users').insert({
+    id: data.user.id,
+    email: payload.email,
+    role: 'doctor', // Default role
+    first_name: payload.firstName,
+    last_name: payload.lastName,
+    title: payload.title || 'Doktor',
+    department: payload.department || 'Bilinmiyor',
+    is_active: true,
   });
 
   const user: AuthUser = {
-    userId: dbUser.id,
-    email: dbUser.email,
-    role: dbUser.role as AuthUser['role'],
+    userId: data.user.id,
+    email: data.user.email!,
+    role: 'doctor',
   };
 
-  const accessToken = await app.jwt.sign(user);
-  const refreshToken = crypto.randomUUID() + crypto.randomUUID();
-  await saveRefreshToken(refreshToken, user, Date.now() + refreshTtlMs());
-
-  return { accessToken, refreshToken, user };
+  return {
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+    user,
+  };
 }
 
 export async function rotateRefreshToken(app: FastifyInstance, token: string): Promise<AuthTokens | null> {
-  const consumed = await consumeRefreshToken(token);
-  if (!consumed || Date.now() > consumed.expiresAt) {
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token: token });
+
+  if (error || !data.session || !data.user) {
     return null;
   }
 
-  const user: AuthUser = consumed.user;
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', data.user.id)
+    .single();
 
-  const accessToken = await app.jwt.sign(user);
-  const refreshToken = crypto.randomUUID() + crypto.randomUUID();
-  await saveRefreshToken(refreshToken, user, Date.now() + refreshTtlMs());
+  const user: AuthUser = {
+    userId: data.user.id,
+    email: data.user.email!,
+    role: (dbUser?.role as AuthUser['role']) || 'doctor',
+  };
 
-  return { accessToken, refreshToken, user };
+  return {
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+    user,
+  };
 }
 
 /**
  * Get full user profile from DB.
  */
 export async function getUserProfile(userId: string) {
-  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!dbUser) return null;
+  const { data: dbUser, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error || !dbUser) return null;
 
   return {
     userId: dbUser.id,
     email: dbUser.email,
     role: dbUser.role,
-    firstName: dbUser.firstName,
-    lastName: dbUser.lastName,
+    firstName: dbUser.first_name,
+    lastName: dbUser.last_name,
     title: dbUser.title,
     department: dbUser.department,
   };

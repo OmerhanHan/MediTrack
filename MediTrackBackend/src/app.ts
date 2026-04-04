@@ -6,16 +6,12 @@ import { registerAudit } from './plugins/audit.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerAuthorization } from './plugins/authorization.js';
 import { registerSecurity } from './plugins/security.js';
-import { registerPrisma } from './plugins/prisma.js';
-import { registerRedis } from './plugins/redis.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
 
   // Core plugins
   await registerSecurity(app);
-  await registerPrisma(app);
-  await registerRedis(app);
   await registerAuth(app);
   await registerAuthorization(app);
   await registerAudit(app);
