@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Personel Performans ve Raporlar - Clinical Sanctuary</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#191c1e",
+              "surface-container": "#eceef0",
+              "on-background": "#191c1e",
+              "primary": "#00458d",
+              "secondary-container": "#d3e1f5",
+              "primary-container": "#005cb9",
+              "inverse-on-surface": "#eff1f3",
+              "surface-container-low": "#f2f4f6",
+              "tertiary-container": "#9f4100",
+              "surface-container-high": "#e6e8ea",
+              "surface": "#f7f9fb",
+              "surface-container-lowest": "#ffffff",
+              "inverse-surface": "#2d3133",
+              "surface-tint": "#015cb9",
+              "on-tertiary-fixed-variant": "#7a3000",
+              "on-primary-container": "#c6d8ff",
+              "inverse-primary": "#aac7ff",
+              "on-primary-fixed": "#001b3e",
+              "surface-variant": "#e0e3e5",
+              "on-secondary-fixed-variant": "#3b4858",
+              "surface-container-highest": "#e0e3e5",
+              "tertiary-fixed": "#ffdbcb",
+              "secondary-fixed-dim": "#bac8db",
+              "on-secondary-container": "#576475",
+              "outline": "#727784",
+              "tertiary": "#793000",
+              "primary-fixed-dim": "#aac7ff",
+              "tertiary-fixed-dim": "#ffb693",
+              "on-error": "#ffffff",
+              "background": "#f7f9fb",
+              "on-tertiary-fixed": "#341000",
+              "outline-variant": "#c2c6d4",
+              "secondary": "#525f70",
+              "primary-fixed": "#d7e3ff",
+              "on-secondary-fixed": "#0f1c2b",
+              "surface-dim": "#d8dadc",
+              "on-primary-fixed-variant": "#00458e",
+              "surface-bright": "#f7f9fb",
+              "error": "#ba1a1a",
+              "secondary-fixed": "#d6e4f8",
+              "on-secondary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-surface-variant": "#424752",
+              "on-tertiary-container": "#ffcdb7",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-header {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .tonal-shift {
+            background-color: rgba(242, 244, 246, 0.5);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm flex justify-between items-center px-6 py-3 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Modern minimalist medical logo with a stylized blue cross and clean geometric lines on a soft white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChmNVQTOqdvlBPfZ2ENCe9aG-SOIzBVO30Bezm1G_KmKgptNq94DpLGdhktn8VFTPAuTzNtLrNSaa1IA5rYH_oNt6MKpOjvDadzuAVynvZ18OlH5kbnV_W3BnAAPf0g3lQ3eN1fsown1A0u53RDFzbogJE9r06RhuKs8ItiFzS3VSSswM72oBZ-Nz_qKhqLaObuH3DVx_lTOFuM6IUBmMQDRIDyosXpQAdehItWLB6XCWIWrYP8wyG7VoA9XY-2SpA1WXcP5ZVI5g"/>
+</div>
+<h1 class="text-xl font-bold bg-gradient-to-br from-blue-800 to-blue-600 bg-clip-text text-transparent font-inter tracking-tight">Clinical Sanctuary</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-200/50 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a female doctor in a white coat with a friendly smile, clean clinical background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3j8HIoKH6cx9ffdU3A9iCM1WFlXU20ca7rsMnNzSbUQ3WiuIin7WT8cni62-ZEEcjIRl6hHcmV19NQRWyIovAp5mkvHDcD-lfeJlPYMlmb4EtEK5-dTavrGe6zr1fUUMXA8yxDfJxdW2e9AMkzjRY_69-RFCHFvWwVDuErKxQAUeiGeMPx-5rYvKSGXYws28J6GNS4jtd2aEJYNtHnobIyT3VWaUVUk8fLj8fLXJ12S1FwgKsUiOix4r_ICWbdCunXWcFfmOZ6c8"/>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 md:px-12 max-w-7xl mx-auto mb-12">
+<!-- Page Hero / Stats Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<nav class="flex items-center gap-2 text-sm text-on-surface-variant mb-2">
+<span>Analiz</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary font-medium">Performans ve Raporlar</span>
+</nav>
+<h2 class="text-4xl font-extrabold tracking-tight text-on-surface">Operasyonel Verimlilik</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">Klinik performansınızı, hasta kabul oranlarını ve personel verimliliğini gerçek zamanlı verilerle takip edin.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest text-on-surface-variant rounded-lg border border-outline-variant/20 hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">description</span>
+<span class="font-medium text-sm">PDF Dışa Aktar</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined">table_view</span>
+<span class="font-medium text-sm">Excel İndir</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+<!-- Main Display Stat -->
+<div class="bg-gradient-to-br from-primary to-primary-container p-8 rounded-xl text-on-primary flex flex-col justify-between min-h-[200px] shadow-xl shadow-primary/10 md:col-span-4">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-3xl opacity-80">groups</span>
+<span class="px-2 py-1 bg-white/20 rounded text-xs font-bold uppercase tracking-widest">+12.4% vs Geçen Ay</span>
+</div>
+<div>
+<h3 class="text-lg opacity-80 font-medium">Toplam Aktif Hasta</h3>
+<p class="text-5xl font-extrabold mt-1 tracking-tighter">1,240</p>
+</div>
+</div>
+<!-- Secondary Stats -->
+</div>
+<!-- Charts Section: Intentional Asymmetry -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+<!-- Monthly Chart (Larger) -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/5">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold text-on-surface">Aylık Hasta Dağılımı</h3>
+<select class="bg-surface-container-low border-none rounded-lg text-sm font-medium focus:ring-primary">
+<option>2023 Verileri</option>
+<option>2024 Verileri</option>
+</select>
+</div>
+<div class="h-64 flex items-end justify-between gap-4 px-2">
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-surface-container-highest rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 40%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Oca</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-surface-container-highest rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 55%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Şub</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-surface-container-highest rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 85%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Mar</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-lg" style="height: 100%;"></div>
+<span class="text-[10px] font-bold text-primary uppercase tracking-tighter">Nis</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-surface-container-highest rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 70%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">May</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-surface-container-highest rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 60%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Haz</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-surface-container-highest rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 90%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Tem</span>
+</div>
+</div>
+</div>
+<!-- Departmental Breakdown (Smaller) -->
+<div class="bg-surface-container-low p-8 rounded-xl">
+<h3 class="text-xl font-bold text-on-surface mb-6">Poliklinik Oranları</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-on-surface font-medium">Genel Cerrahi</span>
+<span class="text-on-surface-variant">42%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 42%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-on-surface font-medium">Kardiyoloji</span>
+<span class="text-on-surface-variant">28%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 28%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-on-surface font-medium">Nöroloji</span>
+<span class="text-on-surface-variant">15%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 15%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-on-surface font-medium">Diğer</span>
+<span class="text-on-surface-variant">15%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-outline" style="width: 15%;"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant/10">
+<button class="w-full text-center text-primary font-bold text-sm hover:underline">Tüm Departmanları Gör</button>
+</div>
+</div>
+</div>
+<!-- Data Table Section -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/5 mb-24">
+<div class="p-6 border-b border-surface-container flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h3 class="text-xl font-bold text-on-surface">Personel Performans Detayları</h3>
+<p class="text-sm text-on-surface-variant">Son 30 günlük operasyonel veriler</p>
+</div>
+<div class="relative w-full md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" placeholder="Personel ara..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+<th class="px-6 py-4">Personel</th>
+<th class="px-6 py-4">Departman</th>
+<th class="px-6 py-4">Hasta Sayısı</th>
+<th class="px-6 py-4">Ort. İşlem Süresi</th>
+<th class="px-6 py-4 text-right">Performans Skoru</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-full" data-alt="Portrait of a male clinical specialist in a medical setting, sharp focus, professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB777SQ9U5c-tQGkxYzkFDjiT1D12Zg_QoNAX1xmuYOx2_l_AOm9-glkKynlHQDK_B90Aw4oQ8OnAPXTMky-7hrV0T_G_8Uu4k5EOcsu_eUBfPWqyXPaIz3xW2EhEt7E-NSi9foPAPm4ejHNApZw4SiJfyG7QaXSHsZRlbKFqwuaRmK4ERf0RyoYAv6ijuiI5ntl_aaDTF2TSHCHfWiu8NKokzid1-N3fehOPgZXQP4BSso8IulU66SHTvwsHRxfHmG0zPEztbfYY"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Dr. Ahmet Yılmaz</p>
+<p class="text-xs text-on-surface-variant">Kıdemli Cerrah</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-on-surface">Genel Cerrahi</td>
+<td class="px-6 py-4 text-sm text-on-surface font-medium">342</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">45 dk</td>
+<td class="px-6 py-4 text-right">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">98%</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-full" data-alt="Female medical professional portrait, focused expression, high-end laboratory environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtaE5eW__ve6JOV_QyiT6AGCi3Es7TzsgIgr_sVQzMBAw3s8RqkyJVr4SMfBB1jV3PVUO6yuM6126BcWEwlS2yUHBSVt-jtK9tt1YXaPbTRZO61nQeN9eqP05BdO8FDJnGRYcuOVdc1a1-lhOg9dVarmvY_XWLAu9-Q7L9x0ACj1Nn-YSfjKNNkSCW70oMt38vgRPXXy8eb-ZgPDQ9C3o_pijT9a2FBS6cWOAYejuf2woSON_i0HEv7R0-nvwW_xQUwukMLYzwGXw"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Hemş. Elif Demir</p>
+<p class="text-xs text-on-surface-variant">Başhemşire</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-on-surface">Kardiyoloji</td>
+<td class="px-6 py-4 text-sm text-on-surface font-medium">512</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">12 dk</td>
+<td class="px-6 py-4 text-right">
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">94%</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-full" data-alt="Young male doctor in hospital setting, natural soft light, medical equipment background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3vq-LxNwCrssPYYONuyiNukPXXR32XDIPEEKB5MQykbduUdV4BKhaqCOHheQVH5sv6a20KGIr7u-CHPrC0V1mOrmAThuX5MVb1MZ--3pmFY-pFs64dxv5ABjl0EL15jK1zVVxc7qEpjinJfEPZQ9V9PFpRAW39eK78YN9BqYBViDuS8w5B6_YgoY2HZ3VMemjlBcDLgq6GEmxDvwB-PH32PfRNjLxCqJFBDHeO3XjyP6NHWg695fKiOaRBQ3HmoaBvhkprdAK8Vk"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Dr. Caner Öz</p>
+<p class="text-xs text-on-surface-variant">Nörolog</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-on-surface">Nöroloji</td>
+<td class="px-6 py-4 text-sm text-on-surface font-medium">210</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">55 dk</td>
+<td class="px-6 py-4 text-right">
+<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">88%</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low flex justify-between items-center">
+<p class="text-xs text-on-surface-variant">Toplam 42 personel listeleniyor</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest text-on-surface-variant hover:text-primary text-xs font-bold transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-2xl bg-white/90 dark:bg-slate-950/90 backdrop-blur-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-slate-200/20 flex justify-around items-center px-2 pb-safe pt-2">
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-1.5 hover:text-blue-600 transition-all" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider mt-1">Ana Sayfa</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-1.5 hover:text-blue-600 transition-all" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider mt-1">Hastalar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-1.5 hover:text-blue-600 transition-all" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider mt-1">Takvim</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-blue-50 text-blue-700 rounded-xl px-4 py-1.5 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider mt-1">Rapor</span>
+</a>
+</nav>
+<!-- Fab Suppression Check: No FAB here as per rule (Details/Transactional page intent) -->
+</body></html>

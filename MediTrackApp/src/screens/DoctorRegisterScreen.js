@@ -19,7 +19,8 @@ const SPECIALTIES = [
 const LEVELS = ['Pratisyen Hekim', 'Uzman Doktor', 'Operatör Doktor'];
 
 export default function DoctorRegisterScreen({ navigation }) {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [level, setLevel] = useState('');
   const [email, setEmail] = useState('');
@@ -39,7 +40,8 @@ export default function DoctorRegisterScreen({ navigation }) {
 
   const handleRegister = async () => {
     const { errors: validationErrors, hasError } = validateForm({
-      name: { value: name, validator: validateName },
+      firstName: { value: firstName, validator: (value) => validateName(value, 'Ad') },
+      lastName: { value: lastName, validator: (value) => validateName(value, 'Soyad') },
       email: { value: email, validator: validateEmail },
       password: { value: password, validator: validatePassword },
     });
@@ -61,13 +63,6 @@ export default function DoctorRegisterScreen({ navigation }) {
     if (finalHasError) return;
 
     setGlobalError(null);
-
-    const names = name.trim().split(' ');
-    const firstName = names[0] || 'Doktor';
-    let lastName = names.length > 1 ? names.slice(1).join(' ') : ' ';
-    if (lastName.trim().length < 2) {
-      lastName = 'Bilinmiyor';
-    }
 
     const result = await registerUser({
       firstName,
@@ -107,13 +102,26 @@ export default function DoctorRegisterScreen({ navigation }) {
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
               <FormInput
-                label="AD SOYAD"
+                label="AD"
                 icon="person-outline"
-                placeholder="Dr. Ahmet Yılmaz"
-                value={name}
-                onChangeText={(val) => { setName(val); setErrors(prev => ({...prev, name: null})); }}
-                onBlur={() => handleBlur('name', name, validateName)}
-                error={errors.name}
+                placeholder="Ahmet"
+                value={firstName}
+                onChangeText={(val) => { setFirstName(val); setErrors((prev) => ({ ...prev, firstName: null })); }}
+                onBlur={() => handleBlur('firstName', firstName, (value) => validateName(value, 'Ad'))}
+                error={errors.firstName}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <FormInput
+                label="SOYAD"
+                icon="person-outline"
+                placeholder="Yılmaz"
+                value={lastName}
+                onChangeText={(val) => { setLastName(val); setErrors((prev) => ({ ...prev, lastName: null })); }}
+                onBlur={() => handleBlur('lastName', lastName, (value) => validateName(value, 'Soyad'))}
+                error={errors.lastName}
                 autoCapitalize="words"
                 autoCorrect={false}
               />

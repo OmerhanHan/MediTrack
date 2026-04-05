@@ -1,48 +1,61 @@
 import { create } from 'zustand';
-import api from '../services/api';
+import { useAuthStore } from './useAuthStore';
+import * as appointmentRepository from '../services/appointmentRepository';
 
 export const useAppointmentStore = create((set, get) => ({
-  // ── State ──
   appointments: [],
   selectedDate: null,
   isLoading: false,
   error: null,
 
-  // ── Actions ──
   setSelectedDate: (date) => set({ selectedDate: date }),
 
   fetchAppointments: async () => {
+    const doctorId = useAuthStore.getState().user?.userId;
+    if (!doctorId) {
+      set({ error: 'Oturum bulunamadı', isLoading: false });
+      return;
+    }
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get('/appointments');
-      // Assume API returns { data: [...] }
-      set({ appointments: response.data || [], isLoading: false });
+      const data = await appointmentRepository.listAppointments(doctorId);
+      set({ appointments: data, isLoading: false });
     } catch (error) {
       set({ error: error.message, isLoading: false });
     }
   },
 
   addAppointment: async (data) => {
+    const doctorId = useAuthStore.getState().user?.userId;
+    if (!doctorId) {
+      return { success: false, error: new Error('Oturum bulunamadı') };
+    }
     set({ isLoading: true, error: null });
     try {
-      const response = await api.post('/appointments', data);
-      const newAppointment = response.data;
+      const newAppointment = await appointmentRepository.createAppointment(doctorId, data);
       set((state) => ({
         appointments: [...state.appointments, newAppointment],
         isLoading: false,
       }));
       return { success: true, data: newAppointment };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      if (error.code === 'APPOINTMENT_CONFLICT' || error.message === 'APPOINTMENT_CONFLICT') {
+        set({ error: 'Bu saat için zaten randevu var', isLoading: false });
+      } else {
+        set({ error: error.message, isLoading: false });
+      }
       return { success: false, error };
     }
   },
 
   updateAppointment: async (id, updates) => {
+    const doctorId = useAuthStore.getState().user?.userId;
+    if (!doctorId) {
+      return { success: false, error: new Error('Oturum bulunamadı') };
+    }
     set({ isLoading: true, error: null });
     try {
-      const response = await api.patch(`/appointments/${id}`, updates);
-      const updatedAppt = response.data;
+      const updatedAppt = await appointmentRepository.updateAppointment(doctorId, id, updates);
       set((state) => ({
         appointments: state.appointments.map((apt) =>
           apt.id === id ? { ...apt, ...updatedAppt } : apt
@@ -51,15 +64,23 @@ export const useAppointmentStore = create((set, get) => ({
       }));
       return { success: true, data: updatedAppt };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      if (error.message === 'APPOINTMENT_NOT_FOUND') {
+        set({ error: 'Randevu bulunamadı', isLoading: false });
+      } else {
+        set({ error: error.message, isLoading: false });
+      }
       return { success: false, error };
     }
   },
 
   cancelAppointment: async (id) => {
+    const doctorId = useAuthStore.getState().user?.userId;
+    if (!doctorId) {
+      return { success: false, error: new Error('Oturum bulunamadı') };
+    }
     set({ isLoading: true, error: null });
     try {
-      await api.patch(`/appointments/${id}`, { status: 'cancelled' });
+      await appointmentRepository.updateAppointment(doctorId, id, { status: 'cancelled' });
       set((state) => ({
         appointments: state.appointments.map((apt) =>
           apt.id === id ? { ...apt, status: 'cancelled' } : apt
@@ -68,22 +89,34 @@ export const useAppointmentStore = create((set, get) => ({
       }));
       return { success: true };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      if (error.message === 'APPOINTMENT_NOT_FOUND') {
+        set({ error: 'Randevu bulunamadı', isLoading: false });
+      } else {
+        set({ error: error.message, isLoading: false });
+      }
       return { success: false, error };
     }
   },
 
   deleteAppointment: async (id) => {
+    const doctorId = useAuthStore.getState().user?.userId;
+    if (!doctorId) {
+      return { success: false, error: new Error('Oturum bulunamadı') };
+    }
     set({ isLoading: true, error: null });
     try {
-      await api.delete(`/appointments/${id}`);
+      await appointmentRepository.deleteAppointment(doctorId, id);
       set((state) => ({
         appointments: state.appointments.filter((apt) => apt.id !== id),
         isLoading: false,
       }));
       return { success: true };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      if (error.message === 'APPOINTMENT_NOT_FOUND') {
+        set({ error: 'Randevu bulunamadı', isLoading: false });
+      } else {
+        set({ error: error.message, isLoading: false });
+      }
       return { success: false, error };
     }
   },
@@ -91,7 +124,6 @@ export const useAppointmentStore = create((set, get) => ({
   setAppointments: (appointments) => set({ appointments }),
   setLoading: (isLoading) => set({ isLoading }),
 
-  // ── Selectors (computed) ──
   getAppointmentsByDate: (date) => {
     return get().appointments.filter((apt) => apt.date === date);
   },
@@ -117,7 +149,6 @@ export const useAppointmentStore = create((set, get) => ({
   getDayLoadMap: () => {
     const loadMap = {};
     get().appointments.forEach((apt) => {
-      // Expecting format YYYY-MM-DD
       const dateParts = apt.date?.split('-');
       if (!dateParts || dateParts.length < 3) return;
       const day = parseInt(dateParts[2], 10);

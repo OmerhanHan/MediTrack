@@ -1,0 +1,7 @@
+-- Bu dosyanın içeriği `fresh_install.sql` ile birleştirildi.
+-- Yeni kurulum veya tam şema sıfırlama için yalnızca şunu çalıştırın:
+--
+--   MediTrackApp/supabase/fresh_install.sql
+--
+-- Eski projede sadece RLS güncellemesi yapıyorsanız, aynı dosyadaki RLS
+-- bölümünü kullanabilirsiniz; tabloları silmeden çalıştırmayın.

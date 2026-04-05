@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../services/supabase';
+import { ACCOUNT_STATUS } from '../constants/accountStatus';
 
 export const useAuthStore = create(
   persist(
@@ -10,6 +11,7 @@ export const useAuthStore = create(
       user: null,
       isAuthenticated: false,
       isHydrated: false,
+      isRestoringProfile: false,
       isLoading: false,
       error: null,
 
@@ -28,7 +30,7 @@ export const useAuthStore = create(
           // Fetch additional profile data (role, first/last name) from Supabase public schema
           const { data: profile } = await supabase
             .from('users')
-            .select('first_name, last_name, role, title, department')
+            .select('first_name, last_name, role, title, department, sicil, account_status')
             .eq('id', data.user.id)
             .single();
 
@@ -40,6 +42,8 @@ export const useAuthStore = create(
             role: profile?.role,
             title: profile?.title,
             department: profile?.department,
+            sicil: profile?.sicil,
+            accountStatus: profile?.account_status ?? ACCOUNT_STATUS.ACTIVE,
           };
 
           set({
@@ -76,25 +80,34 @@ export const useAuthStore = create(
           if (!data.user) throw new Error('Registration failed, no user returned.');
 
           // Create the custom user record in public.users
-          await supabase.from('users').insert({
-            id: data.user.id,
-            email: payload.email,
-            first_name: payload.firstName,
-            last_name: payload.lastName,
-            role: 'doctor', // default
-            title: payload.title || 'Doktor',
-            department: payload.department || 'Bilinmiyor',
-            is_active: true
-          });
+          const { data: inserted, error: insertErr } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: payload.email,
+              first_name: payload.firstName,
+              last_name: payload.lastName,
+              role: 'doctor',
+              title: payload.title || 'Doktor',
+              department: payload.department || 'Bilinmiyor',
+              is_active: true,
+              account_status: ACCOUNT_STATUS.PENDING,
+            })
+            .select('first_name, last_name, role, title, department, sicil, account_status')
+            .single();
+
+          if (insertErr) throw insertErr;
 
           const createdUser = {
             userId: data.user.id,
             email: payload.email,
-            firstName: payload.firstName,
-            lastName: payload.lastName,
+            firstName: inserted?.first_name ?? payload.firstName,
+            lastName: inserted?.last_name ?? payload.lastName,
             role: 'doctor',
-            title: payload.title || 'Doktor',
-            department: payload.department || 'Bilinmiyor',
+            title: inserted?.title ?? (payload.title || 'Doktor'),
+            department: inserted?.department ?? (payload.department || 'Bilinmiyor'),
+            sicil: inserted?.sicil,
+            accountStatus: inserted?.account_status ?? ACCOUNT_STATUS.PENDING,
           };
 
           set({
@@ -129,39 +142,72 @@ export const useAuthStore = create(
           user: state.user ? { ...state.user, ...fields } : null,
         })),
 
+      /** Sunucudan profili yeniler (onay sonrası vb.) */
+      refreshAccountProfile: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+        const { data: profile } = await supabase
+          .from('users')
+          .select('first_name, last_name, role, title, department, sicil, account_status')
+          .eq('id', session.user.id)
+          .single();
+        if (!profile) return;
+        set({
+          user: {
+            userId: session.user.id,
+            email: session.user.email,
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            role: profile.role,
+            title: profile.title,
+            department: profile.department,
+            sicil: profile.sicil,
+            accountStatus: profile.account_status ?? ACCOUNT_STATUS.ACTIVE,
+          },
+        });
+      },
+
       setHydrated: () => set({ isHydrated: true }),
       
       // Called on app mount to restore session automatically if async storage has token
       restoreSession: async () => {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (session && session.user) {
-          // Re-fetch profile
-          const { data: profile } = await supabase
-            .from('users')
-            .select('first_name, last_name, role, title, department')
-            .eq('id', session.user.id)
-            .single();
+        set({ isRestoringProfile: true });
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
 
-          const combinedUser = {
-            userId: session.user.id,
-            email: session.user.email,
-            firstName: profile?.first_name,
-            lastName: profile?.last_name,
-            role: profile?.role,
-            title: profile?.title,
-            department: profile?.department,
-          };
-          
-          set({
-            user: combinedUser,
-            isAuthenticated: true,
-            isHydrated: true
-          });
-        } else {
+          if (session && session.user) {
+            const { data: profile } = await supabase
+              .from('users')
+              .select('first_name, last_name, role, title, department, sicil, account_status')
+              .eq('id', session.user.id)
+              .single();
+
+            const combinedUser = {
+              userId: session.user.id,
+              email: session.user.email,
+              firstName: profile?.first_name,
+              lastName: profile?.last_name,
+              role: profile?.role,
+              title: profile?.title,
+              department: profile?.department,
+              sicil: profile?.sicil,
+              accountStatus: profile?.account_status ?? ACCOUNT_STATUS.ACTIVE,
+            };
+
+            set({
+              user: combinedUser,
+              isAuthenticated: true,
+              isHydrated: true,
+            });
+          } else {
+            set({ isAuthenticated: false, isHydrated: true });
+          }
+        } catch {
           set({ isAuthenticated: false, isHydrated: true });
+        } finally {
+          set({ isRestoringProfile: false });
         }
-      }
+      },
     }),
     {
       name: 'meditrack-auth',
@@ -173,8 +219,6 @@ export const useAuthStore = create(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setHydrated();
-        // Fire async session restore so it matches reality
         state?.restoreSession();
       },
     },

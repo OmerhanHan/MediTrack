@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clinical Sanctuary - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#191c1e",
+              "surface-container": "#eceef0",
+              "on-background": "#191c1e",
+              "primary": "#00458d",
+              "secondary-container": "#d3e1f5",
+              "primary-container": "#005cb9",
+              "inverse-on-surface": "#eff1f3",
+              "surface-container-low": "#f2f4f6",
+              "tertiary-container": "#9f4100",
+              "surface-container-high": "#e6e8ea",
+              "surface": "#f7f9fb",
+              "surface-container-lowest": "#ffffff",
+              "inverse-surface": "#2d3133",
+              "surface-tint": "#015cb9",
+              "on-tertiary-fixed-variant": "#7a3000",
+              "on-primary-container": "#c6d8ff",
+              "inverse-primary": "#aac7ff",
+              "on-primary-fixed": "#001b3e",
+              "surface-variant": "#e0e3e5",
+              "on-secondary-fixed-variant": "#3b4858",
+              "surface-container-highest": "#e0e3e5",
+              "tertiary-fixed": "#ffdbcb",
+              "secondary-fixed-dim": "#bac8db",
+              "on-secondary-container": "#576475",
+              "outline": "#727784",
+              "tertiary": "#793000",
+              "primary-fixed-dim": "#aac7ff",
+              "tertiary-fixed-dim": "#ffb693",
+              "on-error": "#ffffff",
+              "background": "#f7f9fb",
+              "on-tertiary-fixed": "#341000",
+              "outline-variant": "#c2c6d4",
+              "secondary": "#525f70",
+              "primary-fixed": "#d7e3ff",
+              "on-secondary-fixed": "#0f1c2b",
+              "surface-dim": "#d8dadc",
+              "on-primary-fixed-variant": "#00458e",
+              "surface-bright": "#f7f9fb",
+              "error": "#ba1a1a",
+              "secondary-fixed": "#d6e4f8",
+              "on-secondary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-surface-variant": "#424752",
+              "on-tertiary-container": "#ffcdb7",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center px-6 py-3 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden">
+<img alt="Hospital Logo" class="w-full h-full object-cover" data-alt="Modern medical facility logo with minimalist blue cross and clean white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB22d3-Owa_w3ZQNguV7IedHBXqDJEpyl70ood1slVgbEpon8IP2VZJx6H6TGlpK_iKMaFZgFP2ukiAAOnTs24Ozccap9-Ml_rlnlkPNuEtiwSNvofmZpOhnkJqzD7AcVVsPom6y7XWdE55k3mqBcoYBjFzuBDAfsh0CBy3Z9DvzODh_gbpn3K1GPiStxO3-iJuddc8iXF6WhjqX0_DXzwM5TvGCKoTkqfKyrtNhpdyTlQbH3EDJeOTxN3EuRKwmdSWbt3nvxWVyHU"/>
+</div>
+<h1 class="font-inter tracking-tight text-slate-900 dark:text-slate-100 text-xl font-bold bg-gradient-to-br from-blue-800 to-blue-600 bg-clip-text text-transparent">Clinical Sanctuary</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex gap-6 items-center mr-8">
+<span class="text-blue-700 dark:text-blue-400 font-semibold cursor-pointer">Ana Sayfa</span>
+<span class="text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors px-3 py-1 rounded-lg cursor-pointer">Hastalar</span>
+<span class="text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors px-3 py-1 rounded-lg cursor-pointer">Takvim</span>
+</div>
+<button class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-sm">person</span>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Header Section with Export -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2">Yönetici Paneli</h2>
+<p class="text-on-surface-variant max-w-md">Klinik operasyonlarının gerçek zamanlı verileri ve personel performans analitiği.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest text-on-surface font-medium rounded-lg hover:bg-surface-variant transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span>Excel</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary font-medium rounded-lg shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+<span>PDF Raporu</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Main KPI: Total Patients -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[120px]">group</span>
+</div>
+<div class="relative z-10">
+<span class="text-sm font-bold tracking-widest uppercase text-primary mb-4 block">Hasta Ekosistemi</span>
+<h3 class="text-5xl font-black text-on-surface mb-2">1,240</h3>
+<p class="text-on-surface-variant font-medium flex items-center gap-2">
+<span class="text-green-600 flex items-center"><span class="material-symbols-outlined text-sm">trending_up</span> 12%</span>
+                        Geçen aya göre artış
+                    </p>
+</div>
+</div>
+<!-- Side KPI: Active Ratio -->
+<div class="md:col-span-4 bg-primary text-on-primary rounded-xl p-8 flex flex-col justify-between shadow-xl">
+<div>
+<h4 class="text-lg font-bold mb-1 opacity-80">Aktif Hasta Oranı</h4>
+<span class="text-4xl font-black tracking-tight">84.2%</span>
+</div>
+<div class="mt-8">
+<div class="w-full bg-white/20 h-2 rounded-full mb-4">
+<div class="bg-white h-full rounded-full w-[84%]"></div>
+</div>
+<p class="text-sm opacity-90 leading-relaxed">Kapasite kullanım oranı optimize edildi. Mevcut boş yatak sayısı: 18</p>
+</div>
+</div>
+<!-- Stats Chart Placeholder: Patient Flow -->
+<div class="md:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<h4 class="font-bold text-on-surface">Haftalık Hasta Akışı</h4>
+<span class="text-xs font-semibold text-on-surface-variant bg-surface-container-low px-2 py-1 rounded">Son 7 Gün</span>
+</div>
+<div class="h-48 flex items-end justify-between gap-2 px-2">
+<div class="w-full bg-primary/10 rounded-t-lg relative group transition-all hover:bg-primary/20 h-[60%]">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">120</div>
+</div>
+<div class="w-full bg-primary/10 rounded-t-lg relative group transition-all hover:bg-primary/20 h-[45%]"></div>
+<div class="w-full bg-primary/10 rounded-t-lg relative group transition-all hover:bg-primary/20 h-[80%]"></div>
+<div class="w-full bg-primary/40 rounded-t-lg relative group transition-all hover:bg-primary/50 h-[95%]">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-bold">184</div>
+</div>
+<div class="w-full bg-primary/10 rounded-t-lg relative group transition-all hover:bg-primary/20 h-[70%]"></div>
+<div class="w-full bg-primary/10 rounded-t-lg relative group transition-all hover:bg-primary/20 h-[55%]"></div>
+<div class="w-full bg-primary/10 rounded-t-lg relative group transition-all hover:bg-primary/20 h-[65%]"></div>
+</div>
+<div class="flex justify-between mt-4 px-2">
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Pzt</span>
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Sal</span>
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Çar</span>
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Per</span>
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Cum</span>
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Cmt</span>
+<span class="text-[10px] text-on-surface-variant font-bold uppercase">Paz</span>
+</div>
+</div>
+<!-- Personnel Distribution (Doctors Only) -->
+<div class="md:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<h4 class="font-bold text-on-surface">Doktor Dağılımı</h4>
+<span class="text-2xl font-black text-primary">84</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-sm font-medium">Uzman Doktor</span>
+</div>
+<span class="text-sm font-bold">42</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-blue-400"></span>
+<span class="text-sm font-medium">Operatör Doktor</span>
+</div>
+<span class="text-sm font-bold">28</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-blue-200"></span>
+<span class="text-sm font-medium">Pratisyen</span>
+</div>
+<span class="text-sm font-bold">14</span>
+</div>
+<div class="pt-4 border-t border-surface-container mt-2">
+<div class="flex h-4 rounded-full overflow-hidden">
+<div class="bg-primary w-[50%]"></div>
+<div class="bg-blue-400 w-[33%]"></div>
+<div class="bg-blue-200 w-[17%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Alerts / Timeline -->
+<div class="md:col-span-12 lg:col-span-4">
+<button class="w-full h-full text-left bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all active:scale-[0.98] duration-200 group flex flex-col justify-between">
+<div class="flex items-start justify-between w-full">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">badge</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+<div class="mt-8">
+<h4 class="text-xl font-bold text-on-surface mb-1">Personel Kadrosu</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+        Tüm personel listesini ve detaylarını görüntüle
+      </p>
+</div>
+</button>
+</div>
+<!-- Activity Image Bento -->
+<div class="md:col-span-12 lg:col-span-8">
+<button class="w-full h-full text-left bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all active:scale-[0.98] duration-200 group flex flex-col justify-between">
+<div class="flex items-start justify-between w-full">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">insights</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+<div class="mt-8">
+<h4 class="text-xl font-bold text-on-surface mb-1">Operasyonel Mükemmellik</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+        Verimlilik ve kalite analizlerini inceleyin
+      </p>
+</div>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-2xl bg-white/90 dark:bg-slate-950/90 backdrop-blur-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-slate-200/20 dark:border-slate-800/20">
+<div class="flex justify-around items-center w-full px-2 pb-safe pt-2 h-16">
+<a class="flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl px-4 py-1.5 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider">Ana Sayfa</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person_search">person_search</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider">Hastalar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider">Takvim</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-[11px] font-medium font-inter uppercase tracking-wider">Profil</span>
+</a>
+</div>
+</nav>
+</body></html>

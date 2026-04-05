@@ -10,6 +10,7 @@ import FormInput from '../components/FormInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { useAuthStore } from '../store/useAuthStore';
 import { validatePassword, validatePasswordMatch } from '../utils/validators';
+import { isAdminRole } from '../utils/roles';
 
 export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
@@ -85,6 +86,12 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.profileName}>{initials}</Text>
           <Text style={styles.profileRole}>{user?.department || 'Departman'} — {user?.title || 'Unvan'}</Text>
+          {isAdminRole(user?.role) && (
+            <View style={styles.adminBadge}>
+              <Ionicons name="shield-checkmark" size={14} color={Colors.blue700} />
+              <Text style={styles.adminBadgeText}>Yönetici erişimi</Text>
+            </View>
+          )}
 
           <View style={styles.profileInfo}>
             <View style={styles.infoRow}>
@@ -93,7 +100,9 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="card-outline" size={16} color={Colors.primary} />
-              <Text style={styles.infoText}>Sicil: #88291</Text>
+              <Text style={styles.infoText}>
+                Sicil: {user?.sicil ? user.sicil : '—'}
+              </Text>
             </View>
           </View>
         </View>
@@ -215,7 +224,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15, shadowRadius: 4, elevation: 3,
   },
   profileName: { fontSize: 18, fontWeight: '700', color: Colors.onSurface },
-  profileRole: { fontSize: 14, fontWeight: '500', color: Colors.onSurfaceVariant, marginBottom: 16 },
+  profileRole: { fontSize: 14, fontWeight: '500', color: Colors.onSurfaceVariant, marginBottom: 8 },
+  adminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.blue50,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  adminBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.blue700,
+  },
   profileInfo: {
     width: '100%', paddingTop: 16, borderTopWidth: 1,
     borderTopColor: Colors.surfaceContainer, gap: 10,
