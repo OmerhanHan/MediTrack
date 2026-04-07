@@ -6,6 +6,7 @@
 DROP TABLE IF EXISTS public.appointments CASCADE;
 DROP TABLE IF EXISTS public.patients CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
+DROP TABLE IF EXISTS public.audit_logs CASCADE;
 
 DROP FUNCTION IF EXISTS public.assign_user_sicil() CASCADE;
 DROP FUNCTION IF EXISTS public.enforce_user_row_rules() CASCADE;
@@ -90,6 +91,19 @@ CREATE INDEX IF NOT EXISTS appointments_doctor_date_idx ON public.appointments (
 CREATE UNIQUE INDEX IF NOT EXISTS appointments_doctor_slot_unique
   ON public.appointments (doctor_id, date, "time");
 
+CREATE TABLE public.audit_logs (
+  id bigserial PRIMARY KEY,
+  user_id uuid REFERENCES auth.users (id) ON DELETE SET NULL,
+  action text NOT NULL,
+  resource text NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  ip_address text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS audit_logs_user_id_idx ON public.audit_logs (user_id);
+CREATE INDEX IF NOT EXISTS audit_logs_created_at_idx ON public.audit_logs (created_at DESC);
+
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -132,6 +146,7 @@ CREATE TRIGGER trg_users_enforce_rules
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "users_select_self_or_admin" ON public.users
   FOR SELECT USING (id = auth.uid() OR public.is_admin());
@@ -175,6 +190,15 @@ CREATE POLICY "appointments_update_own" ON public.appointments
 
 CREATE POLICY "appointments_delete_own" ON public.appointments
   FOR DELETE USING (doctor_id = auth.uid());
+
+CREATE POLICY "audit_logs_select_admin" ON public.audit_logs
+  FOR SELECT USING (public.is_admin());
+
+CREATE POLICY "audit_logs_insert_authenticated" ON public.audit_logs
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND user_id = auth.uid());
+
+CREATE POLICY "audit_logs_insert_anon" ON public.audit_logs
+  FOR INSERT WITH CHECK (auth.uid() IS NULL AND user_id IS NULL);
 
 -- İlk yönetici: Authentication ile oluşturduktan sonra public.users satırında
 -- account_status = 'active' ve role = 'admin' olmalı (onay bekleyen yönetici panelini açamaz).

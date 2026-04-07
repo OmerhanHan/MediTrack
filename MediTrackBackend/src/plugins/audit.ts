@@ -15,11 +15,11 @@ export async function registerAudit(app: FastifyInstance) {
       user_id: (request as any).user?.userId || null,
       action,
       resource: request.url,
-      metadata: JSON.stringify({
+      metadata: {
         statusCode: reply.statusCode,
         ip: request.ip,
         userAgent: request.headers['user-agent']
-      }),
+      },
       ip_address: request.ip
     }).then(({ error }) => {
       if (error) {
