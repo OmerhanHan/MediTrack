@@ -128,8 +128,13 @@ BEGIN
     IF NEW.sicil IS DISTINCT FROM OLD.sicil THEN
       RAISE EXCEPTION 'Sicil numarası değiştirilemez';
     END IF;
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
+        NEW.role := OLD.role;
+      END IF;
+    END IF;
     IF NEW.account_status IS DISTINCT FROM OLD.account_status THEN
-      IF NOT public.is_admin() THEN
+      IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
         NEW.account_status := OLD.account_status;
       END IF;
     END IF;
@@ -155,7 +160,8 @@ CREATE POLICY "users_insert_self" ON public.users
   FOR INSERT WITH CHECK (id = auth.uid());
 
 CREATE POLICY "users_update_self" ON public.users
-  FOR UPDATE USING (id = auth.uid());
+  FOR UPDATE USING (id = auth.uid())
+  WITH CHECK (id = auth.uid());
 
 CREATE POLICY "users_update_as_admin" ON public.users
   FOR UPDATE USING (public.is_admin())

@@ -39,25 +39,17 @@ export async function fetchPendingApprovals() {
 }
 
 export async function approveAccount(userId) {
-  const { error } = await supabase
-    .from('users')
-    .update({
-      account_status: ACCOUNT_STATUS.ACTIVE,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId);
+  const { error } = await supabase.functions.invoke('admin-account-review', {
+    body: { userId, status: ACCOUNT_STATUS.ACTIVE },
+  });
 
   if (error) throw new Error(error.message);
 }
 
 export async function rejectAccount(userId) {
-  const { error } = await supabase
-    .from('users')
-    .update({
-      account_status: ACCOUNT_STATUS.REJECTED,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId);
+  const { error } = await supabase.functions.invoke('admin-account-review', {
+    body: { userId, status: ACCOUNT_STATUS.REJECTED },
+  });
 
   if (error) throw new Error(error.message);
 }
